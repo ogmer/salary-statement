@@ -1,0 +1,44 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="32" height="32" rx="6" fill="#1e40af"/>
+
+  <!-- 書類の背景 -->
+  <rect x="5" y="3" width="22" height="26" rx="2" fill="white" stroke="#1e40af" stroke-width="1"/>
+
+  <!-- 書類のヘッダー部分 -->
+  <rect x="5" y="3" width="22" height="6" rx="2" fill="#f8fafc"/>
+
+  <!-- タイトル -->
+  <text x="16" y="7.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="3" font-weight="bold" fill="#1e40af">給与明細</text>
+
+  <!-- 書類の線（給与明細の項目） -->
+  <line x1="7" y1="10" x2="25" y2="10" stroke="#1e40af" stroke-width="0.8"/>
+  <line x1="7" y1="12" x2="20" y2="12" stroke="#1e40af" stroke-width="0.6"/>
+  <line x1="7" y1="14" x2="22" y2="14" stroke="#1e40af" stroke-width="0.6"/>
+  <line x1="7" y1="16" x2="18" y2="16" stroke="#1e40af" stroke-width="0.6"/>
+
+  <!-- 計算機のアイコン -->
+  <rect x="9" y="18" width="14" height="9" rx="1" fill="#f3f4f6" stroke="#1e40af" stroke-width="0.8"/>
+
+  <!-- 計算機のディスプレイ -->
+  <rect x="10" y="19" width="12" height="2" rx="0.5" fill="#1e40af"/>
+
+  <!-- 計算機のボタン -->
+  <circle cx="11.5" cy="22.5" r="0.6" fill="#1e40af"/>
+  <circle cx="13.5" cy="22.5" r="0.6" fill="#1e40af"/>
+  <circle cx="15.5" cy="22.5" r="0.6" fill="#1e40af"/>
+  <circle cx="17.5" cy="22.5" r="0.6" fill="#1e40af"/>
+  <circle cx="19.5" cy="22.5" r="0.6" fill="#1e40af"/>
+  <circle cx="21.5" cy="22.5" r="0.6" fill="#1e40af"/>
+
+  <circle cx="11.5" cy="24.5" r="0.6" fill="#1e40af"/>
+  <circle cx="13.5" cy="24.5" r="0.6" fill="#1e40af"/>
+  <circle cx="15.5" cy="24.5" r="0.6" fill="#1e40af"/>
+  <circle cx="17.5" cy="24.5" r="0.6" fill="#1e40af"/>
+  <circle cx="19.5" cy="24.5" r="0.6" fill="#1e40af"/>
+  <circle cx="21.5" cy="24.5" r="0.6" fill="#1e40af"/>
+
+  <!-- 等号記号 -->
+  <line x1="11" y1="26" x2="15" y2="26" stroke="#1e40af" stroke-width="0.8"/>
+  <line x1="11" y1="26.8" x2="15" y2="26.8" stroke="#1e40af" stroke-width="0.8"/>
+</svg>
