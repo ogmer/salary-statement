@@ -785,29 +785,32 @@ export default function Home() {
 
                 {/* 支給額テーブル */}
                 <div className="mb-8">
-                  <table className="w-full border-collapse table-fixed">
+                  <table
+                    className="w-full border-collapse table-fixed"
+                    style={{ minHeight: "200px" }}
+                  >
                     <thead>
                       {/* 1行目: 項目名 */}
                       <tr className="bg-blue-100">
-                        <th className="border-l border-t border-r border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16">
+                        <th className="border-l border-t border-r border-blue-400 px-4 py-3 text-center text-blue-800 bg-blue-200 font-bold w-16 h-16">
                           &nbsp;
                         </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
+                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
                           {salaryData.earnings[0]?.name || ""}
                         </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
+                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
                           {salaryData.earnings[1]?.name || ""}
                         </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
+                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
                           {salaryData.earnings[2]?.name || ""}
                         </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
+                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
                           {salaryData.earnings[3]?.name || ""}
                         </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
+                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
                           {salaryData.earnings[4]?.name || ""}
                         </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
+                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
                           {salaryData.earnings[5]?.name || ""}
                         </th>
                       </tr>
@@ -916,7 +919,10 @@ export default function Home() {
 
                 {/* 控除額テーブル */}
                 <div className="mb-8">
-                  <table className="w-full border-collapse table-fixed">
+                  <table
+                    className="w-full border-collapse table-fixed"
+                    style={{ minHeight: "200px" }}
+                  >
                     <thead>
                       {/* 1行目: 項目名 */}
                       <tr className="bg-blue-100">
