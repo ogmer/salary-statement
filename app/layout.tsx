@@ -6,8 +6,8 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "給与明細サイト",
-  description: "給与明細の管理と表示を行うサイトです",
+  title: "給与明細作成ツール",
+  description: "テンプレートから給与明細の管理と表示を行うサイトです",
   icons: {
     icon: "/favicon.svg",
   },
