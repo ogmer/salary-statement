@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -52,11 +52,11 @@ export default function Home() {
   // 計算処理
   const calculateTotals = () => {
     const totalEarnings = salaryData.earnings.reduce(
-      (sum, item) => sum + item.amount,
+      (sum: number, item: SalaryItem) => sum + item.amount,
       0
     );
     const totalDeductions = salaryData.deductions.reduce(
-      (sum, item) => sum + item.amount,
+      (sum: number, item: SalaryItem) => sum + item.amount,
       0
     );
 
@@ -71,14 +71,14 @@ export default function Home() {
 
   // 項目追加・削除機能
   const addEarningItem = () => {
-    setSalaryData((prev) => ({
+    setSalaryData((prev: SalaryData) => ({
       ...prev,
       earnings: [...prev.earnings, { name: "", amount: 0 }],
     }));
   };
 
   const addDeductionItem = () => {
-    setSalaryData((prev) => ({
+    setSalaryData((prev: SalaryData) => ({
       ...prev,
       deductions: [...prev.deductions, { name: "", amount: 0 }],
     }));
@@ -89,9 +89,9 @@ export default function Home() {
     field: "name" | "amount",
     value: string | number
   ) => {
-    setSalaryData((prev) => ({
+    setSalaryData((prev: SalaryData) => ({
       ...prev,
-      earnings: prev.earnings.map((item, i) =>
+      earnings: prev.earnings.map((item: SalaryItem, i: number) =>
         i === index ? { ...item, [field]: value } : item
       ),
     }));
@@ -102,9 +102,9 @@ export default function Home() {
     field: "name" | "amount",
     value: string | number
   ) => {
-    setSalaryData((prev) => ({
+    setSalaryData((prev: SalaryData) => ({
       ...prev,
-      deductions: prev.deductions.map((item, i) =>
+      deductions: prev.deductions.map((item: SalaryItem, i: number) =>
         i === index ? { ...item, [field]: value } : item
       ),
     }));
@@ -227,8 +227,8 @@ export default function Home() {
                       id="company-name"
                       type="text"
                       value={salaryData.companyName}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
                           ...prev,
                           companyName: e.target.value,
                         }))
@@ -248,8 +248,8 @@ export default function Home() {
                       id="employee-number"
                       type="text"
                       value={salaryData.employeeNumber}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
                           ...prev,
                           employeeNumber: e.target.value,
                         }))
@@ -269,8 +269,8 @@ export default function Home() {
                       id="employee-name"
                       type="text"
                       value={salaryData.employeeName}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
                           ...prev,
                           employeeName: e.target.value,
                         }))
@@ -296,32 +296,34 @@ export default function Home() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {salaryData.earnings.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) =>
-                          updateEarningItem(index, "name", e.target.value)
-                        }
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="項目名"
-                      />
-                      <input
-                        type="number"
-                        value={item.amount}
-                        onChange={(e) =>
-                          updateEarningItem(
-                            index,
-                            "amount",
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                      />
-                    </div>
-                  ))}
+                  {salaryData.earnings.map(
+                    (item: SalaryItem, index: number) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            updateEarningItem(index, "name", e.target.value)
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="項目名"
+                        />
+                        <input
+                          type="number"
+                          value={item.amount}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            updateEarningItem(
+                              index,
+                              "amount",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="0"
+                        />
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -342,8 +344,8 @@ export default function Home() {
                     <select
                       id="year"
                       value={salaryData.year}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
                           ...prev,
                           year: parseInt(e.target.value),
                         }))
@@ -369,8 +371,8 @@ export default function Home() {
                     <select
                       id="month"
                       value={salaryData.month}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
                           ...prev,
                           month: parseInt(e.target.value),
                         }))
@@ -399,8 +401,8 @@ export default function Home() {
                       id="work-days"
                       type="number"
                       value={salaryData.workDays}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
                           ...prev,
                           workDays: parseInt(e.target.value) || 0,
                         }))
@@ -420,8 +422,8 @@ export default function Home() {
                       id="overtime-hours"
                       type="number"
                       value={salaryData.overtimeHours}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
                           ...prev,
                           overtimeHours: parseInt(e.target.value) || 0,
                         }))
@@ -447,32 +449,34 @@ export default function Home() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {salaryData.deductions.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) =>
-                          updateDeductionItem(index, "name", e.target.value)
-                        }
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="項目名"
-                      />
-                      <input
-                        type="number"
-                        value={item.amount}
-                        onChange={(e) =>
-                          updateDeductionItem(
-                            index,
-                            "amount",
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                      />
-                    </div>
-                  ))}
+                  {salaryData.deductions.map(
+                    (item: SalaryItem, index: number) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            updateDeductionItem(index, "name", e.target.value)
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="項目名"
+                        />
+                        <input
+                          type="number"
+                          value={item.amount}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            updateDeductionItem(
+                              index,
+                              "amount",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="0"
+                        />
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             </div>
