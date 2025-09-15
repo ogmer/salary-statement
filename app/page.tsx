@@ -16,14 +16,7 @@ interface SalaryData {
   employeeName: string;
   year: number;
   month: number;
-  workStartYear: number;
-  workStartMonth: number;
-  workStartDay: number;
-  workEndYear: number;
-  workEndMonth: number;
-  workEndDay: number;
   workDays: number;
-  workHours: number;
   overtimeHours: number;
   earnings: SalaryItem[];
   deductions: SalaryItem[];
@@ -36,14 +29,7 @@ export default function Home() {
     employeeName: "",
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
-    workStartYear: new Date().getFullYear(),
-    workStartMonth: new Date().getMonth() + 1,
-    workStartDay: 1,
-    workEndYear: new Date().getFullYear(),
-    workEndMonth: new Date().getMonth() + 1,
-    workEndDay: 31,
     workDays: 22,
-    workHours: 176,
     overtimeHours: 0,
     earnings: [
       { name: "基本給", amount: 0 },
@@ -293,62 +279,6 @@ export default function Home() {
                       placeholder="従業員名を入力"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label
-                        htmlFor="year"
-                        className="block text-sm font-medium text-gray-600 mb-1"
-                      >
-                        年
-                      </label>
-                      <select
-                        id="year"
-                        value={salaryData.year}
-                        onChange={(e) =>
-                          setSalaryData((prev) => ({
-                            ...prev,
-                            year: parseInt(e.target.value),
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        {Array.from({ length: 11 }, (_, i) => 2020 + i).map(
-                          (year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="month"
-                        className="block text-sm font-medium text-gray-600 mb-1"
-                      >
-                        月
-                      </label>
-                      <select
-                        id="month"
-                        value={salaryData.month}
-                        onChange={(e) =>
-                          setSalaryData((prev) => ({
-                            ...prev,
-                            month: parseInt(e.target.value),
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                          (month) => (
-                            <option key={month} value={month}>
-                              {month}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -401,21 +331,21 @@ export default function Home() {
               {/* 労働期間 */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-700">労働期間</h3>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label
-                      htmlFor="work-start-year"
+                      htmlFor="year"
                       className="block text-sm font-medium text-gray-600 mb-1"
                     >
-                      開始年
+                      年
                     </label>
                     <select
-                      id="work-start-year"
-                      value={salaryData.workStartYear}
+                      id="year"
+                      value={salaryData.year}
                       onChange={(e) =>
                         setSalaryData((prev) => ({
                           ...prev,
-                          workStartYear: parseInt(e.target.value),
+                          year: parseInt(e.target.value),
                         }))
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -431,18 +361,18 @@ export default function Home() {
                   </div>
                   <div>
                     <label
-                      htmlFor="work-start-month"
+                      htmlFor="month"
                       className="block text-sm font-medium text-gray-600 mb-1"
                     >
                       月
                     </label>
                     <select
-                      id="work-start-month"
-                      value={salaryData.workStartMonth}
+                      id="month"
+                      value={salaryData.month}
                       onChange={(e) =>
                         setSalaryData((prev) => ({
                           ...prev,
-                          workStartMonth: parseInt(e.target.value),
+                          month: parseInt(e.target.value),
                         }))
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -451,33 +381,6 @@ export default function Home() {
                         (month) => (
                           <option key={month} value={month}>
                             {month}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="work-start-day"
-                      className="block text-sm font-medium text-gray-600 mb-1"
-                    >
-                      日
-                    </label>
-                    <select
-                      id="work-start-day"
-                      value={salaryData.workStartDay}
-                      onChange={(e) =>
-                        setSalaryData((prev) => ({
-                          ...prev,
-                          workStartDay: parseInt(e.target.value),
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map(
-                        (day) => (
-                          <option key={day} value={day}>
-                            {day}
                           </option>
                         )
                       )}
@@ -508,46 +411,25 @@ export default function Home() {
                   </div>
                   <div>
                     <label
-                      htmlFor="work-hours"
+                      htmlFor="overtime-hours"
                       className="block text-sm font-medium text-gray-600 mb-1"
                     >
-                      労働時間
+                      残業時間
                     </label>
                     <input
-                      id="work-hours"
+                      id="overtime-hours"
                       type="number"
-                      value={salaryData.workHours}
+                      value={salaryData.overtimeHours}
                       onChange={(e) =>
                         setSalaryData((prev) => ({
                           ...prev,
-                          workHours: parseInt(e.target.value) || 0,
+                          overtimeHours: parseInt(e.target.value) || 0,
                         }))
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       min="0"
                     />
                   </div>
-                </div>
-                <div>
-                  <label
-                    htmlFor="overtime-hours"
-                    className="block text-sm font-medium text-gray-600 mb-1"
-                  >
-                    所定時間外労働
-                  </label>
-                  <input
-                    id="overtime-hours"
-                    type="number"
-                    value={salaryData.overtimeHours}
-                    onChange={(e) =>
-                      setSalaryData((prev) => ({
-                        ...prev,
-                        overtimeHours: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                  />
                 </div>
               </div>
 
@@ -644,10 +526,16 @@ export default function Home() {
 
             {/* 支給額テーブル */}
             <div className="mb-8">
-              <h3 className="text-lg font-bold text-blue-800 mb-4">支給</h3>
               <table className="w-full border-collapse border border-blue-400">
                 <thead>
+                  {/* 1行目: 追加項目の名前 */}
                   <tr className="bg-blue-100">
+                    <th
+                      rowSpan={4}
+                      className="border border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16"
+                    >
+                      支給
+                    </th>
                     <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
                       基本給
                     </th>
@@ -666,93 +554,122 @@ export default function Home() {
                     <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
                       〇〇手当
                     </th>
-                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
-                      総支給額
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[0]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[1]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[2]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[3]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[4]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[5]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800">
-                      〇〇手当
-                    </td>
                   </tr>
                   {/* 2行目: 追加項目の名前 */}
                   <tr>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.earnings[6]?.name || ""}
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.earnings[0]?.amount &&
+                      salaryData.earnings[0].amount > 0
+                        ? salaryData.earnings[0].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.earnings[7]?.name || ""}
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.earnings[1]?.amount &&
+                      salaryData.earnings[1].amount > 0
+                        ? salaryData.earnings[1].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.earnings[8]?.name || ""}
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.earnings[2]?.amount &&
+                      salaryData.earnings[2].amount > 0
+                        ? salaryData.earnings[2].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.earnings[9]?.name || ""}
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.earnings[3]?.amount &&
+                      salaryData.earnings[3].amount > 0
+                        ? salaryData.earnings[3].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.earnings[10]?.name || ""}
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.earnings[4]?.amount &&
+                      salaryData.earnings[4].amount > 0
+                        ? salaryData.earnings[4].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.earnings[11]?.name || ""}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      総支給額
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.earnings[5]?.amount &&
+                      salaryData.earnings[5].amount > 0
+                        ? salaryData.earnings[5].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                   </tr>
-                  {/* 3行目: 追加項目の金額 */}
+                  {/* 3行目: 追加項目の名前 */}
+                  <tr className="bg-blue-100">
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      その他手当
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.earnings[6]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.earnings[7]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.earnings[8]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.earnings[9]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      控除額合計
+                    </th>
+                  </tr>
+                  {/* 4行目: 追加項目の金額 */}
                   <tr>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[6]?.amount.toLocaleString() || 0}
+                      {salaryData.earnings[6]?.amount &&
+                      salaryData.earnings[6].amount > 0
+                        ? salaryData.earnings[6].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[7]?.amount.toLocaleString() || 0}
+                      {salaryData.earnings[7]?.amount &&
+                      salaryData.earnings[7].amount > 0
+                        ? salaryData.earnings[7].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[8]?.amount.toLocaleString() || 0}
+                      {salaryData.earnings[8]?.amount &&
+                      salaryData.earnings[8].amount > 0
+                        ? salaryData.earnings[8].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[9]?.amount.toLocaleString() || 0}
+                      {salaryData.earnings[9]?.amount &&
+                      salaryData.earnings[9].amount > 0
+                        ? salaryData.earnings[9].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[10]?.amount.toLocaleString() || 0}
+                      {salaryData.earnings[10]?.amount &&
+                      salaryData.earnings[10].amount > 0
+                        ? salaryData.earnings[10].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.earnings[11]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      &nbsp;
+                      {salaryData.earnings[11]?.amount &&
+                      salaryData.earnings[11].amount > 0
+                        ? salaryData.earnings[11].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                   </tr>
-                </tbody>
+                </thead>
               </table>
             </div>
 
             {/* 控除額テーブル */}
             <div className="mb-8">
-              <h3 className="text-lg font-bold text-blue-800 mb-4">控除</h3>
               <table className="w-full border-collapse border border-blue-400">
                 <thead>
+                  {/* 1行目: 追加項目の名前 */}
                   <tr className="bg-blue-100">
+                    <th
+                      rowSpan={4}
+                      className="border border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16"
+                    >
+                      控除
+                    </th>
                     <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
                       健康保険
                     </th>
@@ -771,103 +688,135 @@ export default function Home() {
                     <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
                       その他控除
                     </th>
+                  </tr>
+                  {/* 2行目: 追加項目の名前 */}
+                  <tr>
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.deductions[0]?.amount &&
+                      salaryData.deductions[0].amount > 0
+                        ? salaryData.deductions[0].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.deductions[1]?.amount &&
+                      salaryData.deductions[1].amount > 0
+                        ? salaryData.deductions[1].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.deductions[2]?.amount &&
+                      salaryData.deductions[2].amount > 0
+                        ? salaryData.deductions[2].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.deductions[3]?.amount &&
+                      salaryData.deductions[3].amount > 0
+                        ? salaryData.deductions[3].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.deductions[4]?.amount &&
+                      salaryData.deductions[4].amount > 0
+                        ? salaryData.deductions[4].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
+                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                      {salaryData.deductions[5]?.amount &&
+                      salaryData.deductions[5].amount > 0
+                        ? salaryData.deductions[5].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
+                  </tr>
+                  {/* 3行目: 追加項目の名前 */}
+                  <tr className="bg-blue-100">
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.deductions[6]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.deductions[7]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.deductions[8]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.deductions[9]?.name || ""}
+                    </th>
+                    <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                      {salaryData.deductions[10]?.name || ""}
+                    </th>
                     <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
                       控除額合計
                     </th>
                   </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[0]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[1]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[2]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[3]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[4]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[5]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800">
-                      控除額合計
-                    </td>
-                  </tr>
-                  {/* 3行目: 追加項目の名前 */}
-                  <tr>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.deductions[6]?.name || ""}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.deductions[7]?.name || ""}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.deductions[8]?.name || ""}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.deductions[9]?.name || ""}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.deductions[10]?.name || ""}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      {salaryData.deductions[11]?.name || ""}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-left text-blue-800 bg-blue-50">
-                      控除額合計
-                    </td>
-                  </tr>
                   {/* 4行目: 追加項目の金額 */}
                   <tr>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[6]?.amount.toLocaleString() || 0}
+                      {salaryData.deductions[6]?.amount &&
+                      salaryData.deductions[6].amount > 0
+                        ? salaryData.deductions[6].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[7]?.amount.toLocaleString() || 0}
+                      {salaryData.deductions[7]?.amount &&
+                      salaryData.deductions[7].amount > 0
+                        ? salaryData.deductions[7].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[8]?.amount.toLocaleString() || 0}
+                      {salaryData.deductions[8]?.amount &&
+                      salaryData.deductions[8].amount > 0
+                        ? salaryData.deductions[8].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[9]?.amount.toLocaleString() || 0}
+                      {salaryData.deductions[9]?.amount &&
+                      salaryData.deductions[9].amount > 0
+                        ? salaryData.deductions[9].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[10]?.amount.toLocaleString() || 0}
+                      {salaryData.deductions[10]?.amount &&
+                      salaryData.deductions[10].amount > 0
+                        ? salaryData.deductions[10].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                     <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      {salaryData.deductions[11]?.amount.toLocaleString() || 0}
-                    </td>
-                    <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
-                      &nbsp;
+                      {salaryData.deductions[11]?.amount &&
+                      salaryData.deductions[11].amount > 0
+                        ? salaryData.deductions[11].amount.toLocaleString()
+                        : "\u00A0"}
                     </td>
                   </tr>
-                </tbody>
+                </thead>
               </table>
             </div>
 
             {/* 勤怠・差引支給額 */}
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-lg font-bold text-blue-800 mb-4">勤怠</h3>
+            <div className="grid grid-cols-4 items-stretch">
+              <div className="col-span-3">
                 <table className="w-full border-collapse border border-blue-400">
                   <thead>
                     <tr className="bg-blue-100">
+                      <th
+                        rowSpan={2}
+                        className="border border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16"
+                      >
+                        勤怠
+                      </th>
                       <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
                         出勤日数
                       </th>
                       <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
                         残業時間
                       </th>
+                      <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                        追加項目1
+                      </th>
+                      <th className="border border-blue-400 px-4 py-2 text-left text-blue-800">
+                        追加項目2
+                      </th>
                     </tr>
-                  </thead>
-                  <tbody>
                     <tr>
                       <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
                         {salaryData.workDays}
@@ -875,17 +824,23 @@ export default function Home() {
                       <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
                         {salaryData.overtimeHours}
                       </td>
+                      <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                        {"\u00A0"}
+                      </td>
+                      <td className="border border-blue-400 px-4 py-2 text-right text-blue-800">
+                        {"\u00A0"}
+                      </td>
                     </tr>
-                  </tbody>
+                  </thead>
                 </table>
               </div>
 
-              <div>
-                <h3 className="text-lg font-bold text-blue-800 mb-4">
+              <div className="flex flex-col h-full ml-8">
+                <h3 className="text-sm font-bold text-blue-800 mb-2">
                   差引支給額
                 </h3>
-                <div className="border-2 border-blue-400 p-4 text-center bg-blue-50">
-                  <p className="text-2xl font-bold text-blue-800">
+                <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 flex-1 flex items-center justify-center">
+                  <p className="text-lg font-bold text-blue-800">
                     {totals.netPay.toLocaleString()}
                   </p>
                 </div>
