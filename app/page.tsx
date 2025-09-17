@@ -125,6 +125,161 @@ export default function Home() {
   // クライアントサイドでのみ実行
   useEffect(() => {
     setIsClient(true);
+
+    // 楽天ウィジェットの初期化
+    const initializeRakutenWidgets = () => {
+      if (typeof window !== "undefined") {
+        // 楽天ウィジェットの基本設定
+        window.rakuten_design = "slide";
+        window.rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
+        window.rakuten_items = "ctsmatch";
+        window.rakuten_genreId = "0";
+        window.rakuten_target = "_blank";
+        window.rakuten_theme = "gray";
+        window.rakuten_border = "off";
+        window.rakuten_auto_mode = "on";
+        window.rakuten_genre_title = "off";
+        window.rakuten_recommend = "on";
+        window.rakuten_ts = "1757965055333";
+
+        // 楽天ウィジェットスクリプトを動的に読み込み
+        const script = document.createElement("script");
+        script.src =
+          "https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106";
+        script.async = true;
+        script.onload = () => {
+          console.log("楽天ウィジェットスクリプト読み込み完了");
+
+          // 複数回試行してrakuten_widget関数を確認
+          let attempts = 0;
+          const maxAttempts = 10;
+
+          const checkAndInitialize = () => {
+            attempts++;
+            console.log(`試行回数: ${attempts}/${maxAttempts}`);
+            console.log("window.rakuten_widget:", window.rakuten_widget);
+            console.log("window.rakuten_design:", window.rakuten_design);
+            console.log(
+              "window.rakuten_affiliateId:",
+              window.rakuten_affiliateId
+            );
+
+            if (window.rakuten_widget) {
+              console.log("rakuten_widget関数が見つかりました");
+
+              // 左サイドバー用ウィジェット（200x600）
+              if (rakutenRef.current) {
+                try {
+                  // コンテナをクリア
+                  rakutenRef.current.innerHTML = "";
+                  // サイズ設定を更新
+                  window.rakuten_size = "200x600";
+                  // ウィジェットを初期化
+                  window.rakuten_widget("rakuten-widget-container-left");
+                  console.log("左サイドバーウィジェット初期化完了");
+                } catch (error) {
+                  console.error("左サイドバーウィジェット初期化エラー:", error);
+                }
+              }
+
+              // 右サイドバー用ウィジェット（200x600）
+              if (rakutenRefRight.current) {
+                try {
+                  // コンテナをクリア
+                  rakutenRefRight.current.innerHTML = "";
+                  // サイズ設定を更新
+                  window.rakuten_size = "200x600";
+                  // ウィジェットを初期化
+                  window.rakuten_widget("rakuten-widget-container-right");
+                  console.log("右サイドバーウィジェット初期化完了");
+                } catch (error) {
+                  console.error("右サイドバーウィジェット初期化エラー:", error);
+                }
+              }
+
+              // フッター用ウィジェット（600x200）
+              if (rakutenRefFooter.current) {
+                try {
+                  // コンテナをクリア
+                  rakutenRefFooter.current.innerHTML = "";
+                  // サイズ設定を更新
+                  window.rakuten_size = "600x200";
+                  // ウィジェットを初期化
+                  window.rakuten_widget("rakuten-widget-container-footer");
+                  console.log("フッターウィジェット初期化完了");
+                } catch (error) {
+                  console.error("フッターウィジェット初期化エラー:", error);
+                }
+              }
+            } else if (attempts < maxAttempts) {
+              console.log(
+                "rakuten_widget関数が見つからないため、500ms後に再試行します"
+              );
+              setTimeout(checkAndInitialize, 500);
+            } else {
+              console.error(
+                "rakuten_widget関数が見つかりません（最大試行回数に達しました）"
+              );
+              // 代替手段として、直接HTMLを挿入
+              console.log("代替手段として、直接HTMLを挿入します");
+              if (rakutenRef.current) {
+                rakutenRef.current.innerHTML = `
+                  <div style="width: 200px; height: 600px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc;">
+                    <p style="text-align: center; color: #666;">楽天ウィジェット<br/>読み込み中...</p>
+                  </div>
+                `;
+              }
+              if (rakutenRefRight.current) {
+                rakutenRefRight.current.innerHTML = `
+                  <div style="width: 200px; height: 600px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc;">
+                    <p style="text-align: center; color: #666;">楽天ウィジェット<br/>読み込み中...</p>
+                  </div>
+                `;
+              }
+              if (rakutenRefFooter.current) {
+                rakutenRefFooter.current.innerHTML = `
+                  <div style="width: 600px; height: 200px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc;">
+                    <p style="text-align: center; color: #666;">楽天ウィジェット<br/>読み込み中...</p>
+                  </div>
+                `;
+              }
+            }
+          };
+
+          // 初回実行
+          setTimeout(checkAndInitialize, 1000);
+        };
+        script.onerror = (error) => {
+          console.error("楽天ウィジェットスクリプト読み込みエラー:", error);
+          // エラー時の代替表示
+          if (rakutenRef.current) {
+            rakutenRef.current.innerHTML = `
+              <div style="width: 200px; height: 600px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc;">
+                <p style="text-align: center; color: #666;">楽天ウィジェット<br/>読み込みエラー</p>
+              </div>
+            `;
+          }
+          if (rakutenRefRight.current) {
+            rakutenRefRight.current.innerHTML = `
+              <div style="width: 200px; height: 600px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc;">
+                <p style="text-align: center; color: #666;">楽天ウィジェット<br/>読み込みエラー</p>
+              </div>
+            `;
+          }
+          if (rakutenRefFooter.current) {
+            rakutenRefFooter.current.innerHTML = `
+              <div style="width: 600px; height: 200px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc;">
+                <p style="text-align: center; color: #666;">楽天ウィジェット<br/>読み込みエラー</p>
+              </div>
+            `;
+          }
+        };
+        document.head.appendChild(script);
+      }
+    };
+
+    // 少し遅延してから初期化
+    setTimeout(initializeRakutenWidgets, 100);
   }, []);
 
   // 計算処理
@@ -391,25 +546,6 @@ export default function Home() {
                     ref={rakutenRef}
                     id="rakuten-widget-container-left"
                     style={{ width: "200px", height: "600px" }}
-                    dangerouslySetInnerHTML={{
-                      __html: `
-                        <script type="text/javascript">
-                          rakuten_design = "slide";
-                          rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
-                          rakuten_items = "ctsmatch";
-                          rakuten_genreId = "0";
-                          rakuten_size = "200x600";
-                          rakuten_target = "_blank";
-                          rakuten_theme = "gray";
-                          rakuten_border = "off";
-                          rakuten_auto_mode = "on";
-                          rakuten_genre_title = "off";
-                          rakuten_recommend = "on";
-                          rakuten_ts = "1757965055333";
-                        </script>
-                        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-                      `,
-                    }}
                   ></div>
                 ) : (
                   <div
@@ -1452,25 +1588,6 @@ export default function Home() {
                     ref={rakutenRefRight}
                     id="rakuten-widget-container-right"
                     style={{ width: "200px", height: "600px" }}
-                    dangerouslySetInnerHTML={{
-                      __html: `
-                        <script type="text/javascript">
-                          rakuten_design = "slide";
-                          rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
-                          rakuten_items = "ctsmatch";
-                          rakuten_genreId = "0";
-                          rakuten_size = "200x600";
-                          rakuten_target = "_blank";
-                          rakuten_theme = "gray";
-                          rakuten_border = "off";
-                          rakuten_auto_mode = "on";
-                          rakuten_genre_title = "off";
-                          rakuten_recommend = "on";
-                          rakuten_ts = "1757965055333";
-                        </script>
-                        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-                      `,
-                    }}
                   ></div>
                 ) : (
                   <div
@@ -1512,25 +1629,6 @@ export default function Home() {
                 ref={rakutenRefFooter}
                 id="rakuten-widget-container-footer"
                 style={{ width: "600px", height: "200px" }}
-                dangerouslySetInnerHTML={{
-                  __html: `
-                    <script type="text/javascript">
-                      rakuten_design = "slide";
-                      rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
-                      rakuten_items = "ctsmatch";
-                      rakuten_genreId = "0";
-                      rakuten_size = "600x200";
-                      rakuten_target = "_blank";
-                      rakuten_theme = "gray";
-                      rakuten_border = "off";
-                      rakuten_auto_mode = "on";
-                      rakuten_genre_title = "off";
-                      rakuten_recommend = "on";
-                      rakuten_ts = "1757965055333";
-                    </script>
-                    <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-                  `,
-                }}
               ></div>
             ) : (
               <div
