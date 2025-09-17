@@ -120,70 +120,11 @@ export default function Home() {
   const rakutenRef = useRef<HTMLDivElement>(null);
   const rakutenRefRight = useRef<HTMLDivElement>(null);
   const rakutenRefFooter = useRef<HTMLDivElement>(null);
+  const [isClient, setIsClient] = useState(false);
 
-  // 楽天ウィジェットの初期化
+  // クライアントサイドでのみ実行
   useEffect(() => {
-    const initializeRakutenWidgets = () => {
-      if (typeof window !== "undefined") {
-        // 楽天ウィジェットの基本設定
-        window.rakuten_design = "slide";
-        window.rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
-        window.rakuten_items = "ctsmatch";
-        window.rakuten_genreId = "0";
-        window.rakuten_target = "_blank";
-        window.rakuten_theme = "gray";
-        window.rakuten_border = "off";
-        window.rakuten_auto_mode = "on";
-        window.rakuten_genre_title = "off";
-        window.rakuten_recommend = "on";
-        window.rakuten_ts = "1757965055333";
-
-        // 楽天ウィジェットスクリプトを動的に読み込み
-        const script = document.createElement("script");
-        script.src =
-          "https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106";
-        script.async = true;
-        script.onload = () => {
-          // スクリプト読み込み後にウィジェットを初期化
-          setTimeout(() => {
-            if (window.rakuten_widget) {
-              // 左サイドバー用ウィジェット（200x600）
-              if (rakutenRef.current) {
-                window.rakuten_size = "200x600";
-                try {
-                  window.rakuten_widget("rakuten-widget-container-left");
-                } catch (error) {
-                  console.error("左サイドバーウィジェット初期化エラー:", error);
-                }
-              }
-
-              // 右サイドバー用ウィジェット（200x600）
-              if (rakutenRefRight.current) {
-                window.rakuten_size = "200x600";
-                try {
-                  window.rakuten_widget("rakuten-widget-container-right");
-                } catch (error) {
-                  console.error("右サイドバーウィジェット初期化エラー:", error);
-                }
-              }
-
-              // フッター用ウィジェット（600x200）
-              if (rakutenRefFooter.current) {
-                window.rakuten_size = "600x200";
-                try {
-                  window.rakuten_widget("rakuten-widget-container-footer");
-                } catch (error) {
-                  console.error("フッターウィジェット初期化エラー:", error);
-                }
-              }
-            }
-          }, 1000);
-        };
-        document.head.appendChild(script);
-      }
-    };
-
-    initializeRakutenWidgets();
+    setIsClient(true);
   }, []);
 
   // 計算処理
@@ -445,11 +386,45 @@ export default function Home() {
                 おすすめ商品
               </h3>
               <div className="flex justify-center">
-                <div
-                  ref={rakutenRef}
-                  id="rakuten-widget-container-left"
-                  style={{ width: "200px", height: "600px" }}
-                ></div>
+                {isClient ? (
+                  <div
+                    ref={rakutenRef}
+                    id="rakuten-widget-container-left"
+                    style={{ width: "200px", height: "600px" }}
+                    dangerouslySetInnerHTML={{
+                      __html: `
+                        <script type="text/javascript">
+                          rakuten_design = "slide";
+                          rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
+                          rakuten_items = "ctsmatch";
+                          rakuten_genreId = "0";
+                          rakuten_size = "200x600";
+                          rakuten_target = "_blank";
+                          rakuten_theme = "gray";
+                          rakuten_border = "off";
+                          rakuten_auto_mode = "on";
+                          rakuten_genre_title = "off";
+                          rakuten_recommend = "on";
+                          rakuten_ts = "1757965055333";
+                        </script>
+                        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+                      `,
+                    }}
+                  ></div>
+                ) : (
+                  <div
+                    style={{
+                      width: "200px",
+                      height: "600px",
+                      backgroundColor: "#f3f4f6",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <span className="text-gray-500 text-sm">読み込み中...</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1472,11 +1447,45 @@ export default function Home() {
                 おすすめ商品
               </h3>
               <div className="flex justify-center">
-                <div
-                  ref={rakutenRefRight}
-                  id="rakuten-widget-container-right"
-                  style={{ width: "200px", height: "600px" }}
-                ></div>
+                {isClient ? (
+                  <div
+                    ref={rakutenRefRight}
+                    id="rakuten-widget-container-right"
+                    style={{ width: "200px", height: "600px" }}
+                    dangerouslySetInnerHTML={{
+                      __html: `
+                        <script type="text/javascript">
+                          rakuten_design = "slide";
+                          rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
+                          rakuten_items = "ctsmatch";
+                          rakuten_genreId = "0";
+                          rakuten_size = "200x600";
+                          rakuten_target = "_blank";
+                          rakuten_theme = "gray";
+                          rakuten_border = "off";
+                          rakuten_auto_mode = "on";
+                          rakuten_genre_title = "off";
+                          rakuten_recommend = "on";
+                          rakuten_ts = "1757965055333";
+                        </script>
+                        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+                      `,
+                    }}
+                  ></div>
+                ) : (
+                  <div
+                    style={{
+                      width: "200px",
+                      height: "600px",
+                      backgroundColor: "#f3f4f6",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <span className="text-gray-500 text-sm">読み込み中...</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1498,11 +1507,45 @@ export default function Home() {
 
           {/* フッター用楽天ウィジェット */}
           <div className="mt-8 flex justify-center">
-            <div
-              ref={rakutenRefFooter}
-              id="rakuten-widget-container-footer"
-              style={{ width: "600px", height: "200px" }}
-            ></div>
+            {isClient ? (
+              <div
+                ref={rakutenRefFooter}
+                id="rakuten-widget-container-footer"
+                style={{ width: "600px", height: "200px" }}
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    <script type="text/javascript">
+                      rakuten_design = "slide";
+                      rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
+                      rakuten_items = "ctsmatch";
+                      rakuten_genreId = "0";
+                      rakuten_size = "600x200";
+                      rakuten_target = "_blank";
+                      rakuten_theme = "gray";
+                      rakuten_border = "off";
+                      rakuten_auto_mode = "on";
+                      rakuten_genre_title = "off";
+                      rakuten_recommend = "on";
+                      rakuten_ts = "1757965055333";
+                    </script>
+                    <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
+                  `,
+                }}
+              ></div>
+            ) : (
+              <div
+                style={{
+                  width: "600px",
+                  height: "200px",
+                  backgroundColor: "#f3f4f6",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span className="text-gray-500 text-sm">読み込み中...</span>
+              </div>
+            )}
           </div>
         </div>
       </footer>
