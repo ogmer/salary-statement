@@ -379,8 +379,8 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="w-full px-0">
         <div className="flex">
-          {/* 左サイドバー - 楽天アフィリエイト */}
-          <div className="w-64 flex-shrink-0 hidden lg:block">
+          {/* 左サイドバー - 楽天アフィリエイト（PC版のみ） */}
+          <div className="w-64 flex-shrink-0 hidden xl:block">
             <div className="bg-white rounded-lg shadow-md p-4 sticky top-8 ml-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                 おすすめ商品
@@ -1440,8 +1440,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 右サイドバー - 楽天アフィリエイト */}
-          <div className="w-64 flex-shrink-0 hidden lg:block">
+          {/* 右サイドバー - 楽天アフィリエイト（PC版のみ） */}
+          <div className="w-64 flex-shrink-0 hidden xl:block">
             <div className="bg-white rounded-lg shadow-md p-4 sticky top-8 mr-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                 おすすめ商品
@@ -1505,13 +1505,14 @@ export default function Home() {
             </a>
           </div>
 
-          {/* フッター用楽天ウィジェット */}
+          {/* フッター用楽天ウィジェット（全画面サイズで表示） */}
           <div className="mt-8 flex justify-center">
             {isClient ? (
               <div
                 ref={rakutenRefFooter}
                 id="rakuten-widget-container-footer"
-                style={{ width: "600px", height: "200px" }}
+                className="w-full max-w-2xl"
+                style={{ height: "200px" }}
                 dangerouslySetInnerHTML={{
                   __html: `
                     <script type="text/javascript">
@@ -1534,8 +1535,8 @@ export default function Home() {
               ></div>
             ) : (
               <div
+                className="w-full max-w-2xl"
                 style={{
-                  width: "600px",
                   height: "200px",
                   backgroundColor: "#f3f4f6",
                   display: "flex",
