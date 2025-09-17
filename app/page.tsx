@@ -6,6 +6,25 @@ import Script from "next/script";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
+// 楽天ウィジェットの型定義
+declare global {
+  interface Window {
+    rakuten_widget: (containerId: string) => void;
+    rakuten_design: string;
+    rakuten_affiliateId: string;
+    rakuten_items: string;
+    rakuten_genreId: string;
+    rakuten_size: string;
+    rakuten_target: string;
+    rakuten_theme: string;
+    rakuten_border: string;
+    rakuten_auto_mode: string;
+    rakuten_genre_title: string;
+    rakuten_recommend: string;
+    rakuten_ts: string;
+  }
+}
+
 interface SalaryItem {
   name: string;
   amount: number;
@@ -102,6 +121,71 @@ export default function Home() {
   const rakutenRefRight = useRef<HTMLDivElement>(null);
   const rakutenRefFooter = useRef<HTMLDivElement>(null);
 
+  // 楽天ウィジェットの初期化
+  useEffect(() => {
+    const initializeRakutenWidgets = () => {
+      if (typeof window !== "undefined") {
+        // 楽天ウィジェットの基本設定
+        window.rakuten_design = "slide";
+        window.rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
+        window.rakuten_items = "ctsmatch";
+        window.rakuten_genreId = "0";
+        window.rakuten_target = "_blank";
+        window.rakuten_theme = "gray";
+        window.rakuten_border = "off";
+        window.rakuten_auto_mode = "on";
+        window.rakuten_genre_title = "off";
+        window.rakuten_recommend = "on";
+        window.rakuten_ts = "1757965055333";
+
+        // 楽天ウィジェットスクリプトを動的に読み込み
+        const script = document.createElement("script");
+        script.src =
+          "https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106";
+        script.async = true;
+        script.onload = () => {
+          // スクリプト読み込み後にウィジェットを初期化
+          setTimeout(() => {
+            if (window.rakuten_widget) {
+              // 左サイドバー用ウィジェット（200x600）
+              if (rakutenRef.current) {
+                window.rakuten_size = "200x600";
+                try {
+                  window.rakuten_widget("rakuten-widget-container-left");
+                } catch (error) {
+                  console.error("左サイドバーウィジェット初期化エラー:", error);
+                }
+              }
+
+              // 右サイドバー用ウィジェット（200x600）
+              if (rakutenRefRight.current) {
+                window.rakuten_size = "200x600";
+                try {
+                  window.rakuten_widget("rakuten-widget-container-right");
+                } catch (error) {
+                  console.error("右サイドバーウィジェット初期化エラー:", error);
+                }
+              }
+
+              // フッター用ウィジェット（600x200）
+              if (rakutenRefFooter.current) {
+                window.rakuten_size = "600x200";
+                try {
+                  window.rakuten_widget("rakuten-widget-container-footer");
+                } catch (error) {
+                  console.error("フッターウィジェット初期化エラー:", error);
+                }
+              }
+            }
+          }, 1000);
+        };
+        document.head.appendChild(script);
+      }
+    };
+
+    initializeRakutenWidgets();
+  }, []);
+
   // 計算処理
   const calculateTotals = () => {
     const totalEarnings = salaryData.earnings.reduce(
@@ -193,8 +277,10 @@ export default function Home() {
 
   // PDF出力機能
   const exportToPDF = async () => {
+    let element: HTMLElement | null = null;
     try {
-      const element = document.getElementById("salary-statement");
+      // 常に表示中の要素を使用（スマホ版では一時的に表示）
+      element = document.getElementById("salary-statement");
       if (!element) {
         alert("給与明細が見つかりません。");
         return;
@@ -210,20 +296,53 @@ export default function Home() {
         button.disabled = true;
       }
 
+      // スマホ版では要素が非表示なので、一時的に表示状態にする
+      const isHidden =
+        element.classList.contains("hidden") || element.offsetParent === null;
+      if (isHidden) {
+        element.style.display = "block";
+        element.style.visibility = "visible";
+        element.style.position = "static";
+        element.style.left = "auto";
+        element.style.top = "auto";
+        element.style.zIndex = "9999";
+        element.style.width = "800px";
+        element.style.height = "auto";
+
+        // レンダリングを待つ
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+
       // html2canvasで要素をキャプチャ（高品質設定）
       const canvas = await html2canvas(element, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
+        width: 800,
+        height: element.scrollHeight || 1000,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
+        windowWidth: 800,
+        windowHeight: element.scrollHeight || 1000,
+        ignoreElements: (el) => {
+          // 楽天ウィジェットなどの外部要素を除外
+          return el.id?.includes("rakuten") || false;
+        },
       });
+
+      // スマホ版の要素を元の非表示状態に戻す
+      if (isHidden) {
+        element.style.display = "";
+        element.style.visibility = "";
+        element.style.position = "";
+        element.style.left = "";
+        element.style.top = "";
+        element.style.zIndex = "";
+        element.style.width = "";
+        element.style.height = "";
+      }
 
       const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jsPDF("p", "mm", "a4");
@@ -291,7 +410,18 @@ export default function Home() {
       }
     } catch (error) {
       console.error("PDF出力エラー:", error);
-      alert("PDF出力中にエラーが発生しました。");
+      console.error("要素の状態:", {
+        element: element,
+        display: element?.style.display,
+        visibility: element?.style.visibility,
+        offsetWidth: element?.offsetWidth,
+        offsetHeight: element?.offsetHeight,
+      });
+      alert(
+        `PDF出力中にエラーが発生しました: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
 
       // エラー時もボタンの状態を元に戻す
       const button = document.querySelector(
@@ -309,19 +439,23 @@ export default function Home() {
       <div className="w-full px-0">
         <div className="flex">
           {/* 左サイドバー - 楽天アフィリエイト */}
-          <div className="w-64 flex-shrink-0 hidden xl:block">
+          <div className="w-64 flex-shrink-0 hidden lg:block">
             <div className="bg-white rounded-lg shadow-md p-4 sticky top-8 ml-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                 おすすめ商品
               </h3>
               <div className="flex justify-center">
-                <div ref={rakutenRef} id="rakuten-widget-container-left"></div>
+                <div
+                  ref={rakutenRef}
+                  id="rakuten-widget-container-left"
+                  style={{ width: "200px", height: "600px" }}
+                ></div>
               </div>
             </div>
           </div>
 
           {/* メインコンテンツ */}
-          <div className="flex-1 max-w-4xl mx-auto px-4 xl:px-8">
+          <div className="flex-1 max-w-4xl mx-auto px-4 lg:px-8">
             <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
               給与明細作成ツール
             </h1>
@@ -336,7 +470,7 @@ export default function Home() {
                 給与明細入力フォーム
               </h2>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* 左列: 基本情報と支給項目 */}
                 <div className="space-y-6">
                   {/* 基本情報 */}
@@ -735,392 +869,595 @@ export default function Home() {
                 </button>
               </div>
 
-              <div id="salary-statement" className="bg-white p-8">
-                {/* 給与明細のヘッダー */}
-                <div className="mb-8">
-                  {/* 1行目: 会社名 | 給与明細書 | 社員番号 */}
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <p className="text-gray-800">
-                        会社名: {salaryData.companyName || ""}
-                      </p>
+              {/* スマホ版では非表示、PC版では表示 */}
+              <div className="hidden md:block">
+                <div id="salary-statement" className="bg-white p-8">
+                  {/* 給与明細のヘッダー */}
+                  <div className="mb-8">
+                    {/* 1行目: 会社名 | 給与明細書 | 社員番号 */}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <p className="text-gray-800">
+                          会社名: {salaryData.companyName || ""}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <h1 className="text-3xl font-bold text-blue-800">
+                          給与明細書
+                        </h1>
+                      </div>
+                      <div>
+                        <p
+                          className="text-gray-800"
+                          style={{ textAlign: "left", paddingLeft: "25%" }}
+                        >
+                          社員番号: {salaryData.employeeNumber || ""}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <h1 className="text-3xl font-bold text-blue-800">
-                        給与明細書
-                      </h1>
-                    </div>
-                    <div>
-                      <p
-                        className="text-gray-800"
-                        style={{ textAlign: "left", paddingLeft: "25%" }}
-                      >
-                        社員番号: {salaryData.employeeNumber || ""}
-                      </p>
+
+                    {/* 2行目: 部署名 | 年月 | 氏名 */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-gray-800">
+                          部署名: {salaryData.departmentName || ""}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xl font-medium text-blue-600">
+                          {salaryData.year}年 {salaryData.month}月分
+                        </p>
+                      </div>
+                      <div>
+                        <p
+                          className="text-gray-800"
+                          style={{ textAlign: "left", paddingLeft: "25%" }}
+                        >
+                          氏名: {salaryData.employeeName || ""}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 2行目: 部署名 | 年月 | 氏名 */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-gray-800">
-                        部署名: {salaryData.departmentName || ""}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xl font-medium text-blue-600">
-                        {salaryData.year}年 {salaryData.month}月分
-                      </p>
-                    </div>
-                    <div>
-                      <p
-                        className="text-gray-800"
-                        style={{ textAlign: "left", paddingLeft: "25%" }}
-                      >
-                        氏名: {salaryData.employeeName || ""}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 支給額テーブル */}
-                <div className="mb-8">
-                  <table
-                    className="w-full border-collapse table-fixed"
-                    style={{ minHeight: "200px" }}
-                  >
-                    <thead>
-                      {/* 1行目: 項目名 */}
-                      <tr className="bg-blue-100">
-                        <th className="border-l border-t border-r border-blue-400 px-4 py-3 text-center text-blue-800 bg-blue-200 font-bold w-16 h-16">
-                          &nbsp;
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
-                          {salaryData.earnings[0]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
-                          {salaryData.earnings[1]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
-                          {salaryData.earnings[2]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
-                          {salaryData.earnings[3]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
-                          {salaryData.earnings[4]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-3 text-left text-blue-800 w-1/6 h-16">
-                          {salaryData.earnings[5]?.name || ""}
-                        </th>
-                      </tr>
-                      {/* 2行目: 金額表示 */}
-                      <tr>
-                        <td className="border-l border-r border-blue-400 px-4 py-2 text-center text-blue-800 w-16 bg-blue-200 font-bold text-bottom">
-                          支
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[0]?.amount &&
-                          salaryData.earnings[0].amount > 0
-                            ? salaryData.earnings[0].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[1]?.amount &&
-                          salaryData.earnings[1].amount > 0
-                            ? salaryData.earnings[1].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[2]?.amount &&
-                          salaryData.earnings[2].amount > 0
-                            ? salaryData.earnings[2].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[3]?.amount &&
-                          salaryData.earnings[3].amount > 0
-                            ? salaryData.earnings[3].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[4]?.amount &&
-                          salaryData.earnings[4].amount > 0
-                            ? salaryData.earnings[4].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[5]?.amount &&
-                          salaryData.earnings[5].amount > 0
-                            ? salaryData.earnings[5].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                      </tr>
-                      {/* 3行目: その他手当の項目名 */}
-                      <tr className="bg-blue-100">
-                        <td className="border-l border-r border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16 text-top">
-                          給
-                        </td>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.earnings[6]?.name || ""}
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.earnings[7]?.name || ""}
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.earnings[8]?.name || ""}
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          &nbsp;
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          &nbsp;
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          支給額合計
-                        </th>
-                      </tr>
-                      {/* 4行目: その他手当の金額 */}
-                      <tr>
-                        <td className="border-l border-r border-b border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16 text-middle">
-                          {"\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[6]?.amount &&
-                          salaryData.earnings[6].amount > 0
-                            ? salaryData.earnings[6].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[7]?.amount &&
-                          salaryData.earnings[7].amount > 0
-                            ? salaryData.earnings[7].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.earnings[8]?.amount &&
-                          salaryData.earnings[8].amount > 0
-                            ? salaryData.earnings[8].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          &nbsp;
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          &nbsp;
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 font-bold w-1/6">
-                          {totals.totalEarnings.toLocaleString()}
-                        </td>
-                      </tr>
-                    </thead>
-                  </table>
-                </div>
-
-                {/* 控除額テーブル */}
-                <div className="mb-8">
-                  <table
-                    className="w-full border-collapse table-fixed"
-                    style={{ minHeight: "200px" }}
-                  >
-                    <thead>
-                      {/* 1行目: 項目名 */}
-                      <tr className="bg-blue-100">
-                        <th className="border-l border-t border-r border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16">
-                          &nbsp;
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[0]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[1]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[2]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[3]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[4]?.name || ""}
-                        </th>
-                        <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          <input
-                            type="text"
-                            value={
-                              salaryData.deductions[5]?.name || "その他控除"
-                            }
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>
-                            ) => updateDeductionItem(5, "name", e.target.value)}
-                            className="w-full bg-transparent border-none outline-none text-blue-800 font-semibold"
-                            placeholder="その他控除"
-                          />
-                        </th>
-                      </tr>
-                      {/* 2行目: 金額表示 */}
-                      <tr>
-                        <td className="border-l border-r border-blue-400 px-4 py-2 text-center text-blue-800 w-16 bg-blue-200 font-bold text-bottom">
-                          控
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[0]?.amount &&
-                          salaryData.deductions[0].amount > 0
-                            ? salaryData.deductions[0].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[1]?.amount &&
-                          salaryData.deductions[1].amount > 0
-                            ? salaryData.deductions[1].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[2]?.amount &&
-                          salaryData.deductions[2].amount > 0
-                            ? salaryData.deductions[2].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[3]?.amount &&
-                          salaryData.deductions[3].amount > 0
-                            ? salaryData.deductions[3].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[4]?.amount &&
-                          salaryData.deductions[4].amount > 0
-                            ? salaryData.deductions[4].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[5]?.amount &&
-                          salaryData.deductions[5].amount > 0
-                            ? salaryData.deductions[5].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                      </tr>
-                      {/* 3行目: その他控除の項目名 */}
-                      <tr className="bg-blue-100">
-                        <td className="border-l border-r border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16 text-top">
-                          除
-                        </td>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[6]?.name || ""}
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[7]?.name || ""}
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          {salaryData.deductions[8]?.name || ""}
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          &nbsp;
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          &nbsp;
-                        </th>
-                        <th className="border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/6">
-                          控除額合計
-                        </th>
-                      </tr>
-                      {/* 4行目: その他控除の金額 */}
-                      <tr>
-                        <td className="border-l border-r border-b border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16 text-middle">
-                          {"\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[6]?.amount &&
-                          salaryData.deductions[6].amount > 0
-                            ? salaryData.deductions[6].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[7]?.amount &&
-                          salaryData.deductions[7].amount > 0
-                            ? salaryData.deductions[7].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          {salaryData.deductions[8]?.amount &&
-                          salaryData.deductions[8].amount > 0
-                            ? salaryData.deductions[8].amount.toLocaleString()
-                            : "\u00A0"}
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          &nbsp;
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/6">
-                          &nbsp;
-                        </td>
-                        <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 font-bold w-1/6">
-                          {totals.totalDeductions.toLocaleString()}
-                        </td>
-                      </tr>
-                    </thead>
-                  </table>
-                </div>
-
-                {/* 勤怠・差引支給額 */}
-                <div className="flex gap-8 items-start">
-                  <div className="w-4/5">
-                    <table className="w-full border-collapse table-fixed">
+                  {/* 支給額テーブル */}
+                  <div className="mb-8">
+                    <table
+                      className="w-full border-collapse table-fixed"
+                      style={{ minHeight: "200px" }}
+                    >
                       <thead>
+                        {/* 1行目: 項目名 */}
                         <tr className="bg-blue-100">
-                          <th className="border-l border-t border-r border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16">
-                            勤
+                          <th
+                            className="border-l border-t border-r border-blue-400 px-2 py-3 text-center text-blue-800 bg-blue-200 font-bold h-16"
+                            style={{ width: "8%" }}
+                          >
+                            &nbsp;
                           </th>
-                          <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/4">
-                            {salaryData.attendance[0]?.name || ""}
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[0]?.name || ""}
                           </th>
-                          <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/4">
-                            {salaryData.attendance[1]?.name || ""}
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[1]?.name || ""}
                           </th>
-                          <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/4">
-                            {salaryData.attendance[2]?.name || ""}
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[2]?.name || ""}
                           </th>
-                          <th className="border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800 w-1/4">
-                            {salaryData.attendance[3]?.name || ""}
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[3]?.name || ""}
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[4]?.name || ""}
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            style={{ width: "17%" }}
+                          >
+                            {salaryData.earnings[5]?.name || ""}
                           </th>
                         </tr>
+                        {/* 2行目: 金額表示 */}
                         <tr>
-                          <td className="border-l border-r border-b border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16 text-middle">
-                            怠
+                          <td
+                            className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-bottom"
+                            style={{ width: "8%" }}
+                          >
+                            支
                           </td>
-                          <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/4">
-                            {formatAmount(
-                              salaryData.attendance[0]?.amount || 0
-                            )}
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[0]?.amount &&
+                            salaryData.earnings[0].amount > 0
+                              ? salaryData.earnings[0].amount.toLocaleString()
+                              : "\u00A0"}
                           </td>
-                          <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/4">
-                            {formatAmount(
-                              salaryData.attendance[1]?.amount || 0,
-                              true
-                            )}
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[1]?.amount &&
+                            salaryData.earnings[1].amount > 0
+                              ? salaryData.earnings[1].amount.toLocaleString()
+                              : "\u00A0"}
                           </td>
-                          <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/4">
-                            {formatAmount(
-                              salaryData.attendance[2]?.amount || 0
-                            )}
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[2]?.amount &&
+                            salaryData.earnings[2].amount > 0
+                              ? salaryData.earnings[2].amount.toLocaleString()
+                              : "\u00A0"}
                           </td>
-                          <td className="border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800 w-1/4">
-                            {formatAmount(
-                              salaryData.attendance[3]?.amount || 0
-                            )}
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[3]?.amount &&
+                            salaryData.earnings[3].amount > 0
+                              ? salaryData.earnings[3].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[4]?.amount &&
+                            salaryData.earnings[4].amount > 0
+                              ? salaryData.earnings[4].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "17%" }}
+                          >
+                            {salaryData.earnings[5]?.amount &&
+                            salaryData.earnings[5].amount > 0
+                              ? salaryData.earnings[5].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                        </tr>
+                        {/* 3行目: その他手当の項目名 */}
+                        <tr className="bg-blue-100">
+                          <td
+                            className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-top"
+                            style={{ width: "8%" }}
+                          >
+                            給
+                          </td>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[6]?.name || ""}
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[7]?.name || ""}
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[8]?.name || ""}
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "17%" }}
+                          >
+                            支給額合計
+                          </th>
+                        </tr>
+                        {/* 4行目: その他手当の金額 */}
+                        <tr>
+                          <td
+                            className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
+                            style={{ width: "8%" }}
+                          >
+                            {"\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[6]?.amount &&
+                            salaryData.earnings[6].amount > 0
+                              ? salaryData.earnings[6].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[7]?.amount &&
+                            salaryData.earnings[7].amount > 0
+                              ? salaryData.earnings[7].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.earnings[8]?.amount &&
+                            salaryData.earnings[8].amount > 0
+                              ? salaryData.earnings[8].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800 font-bold"
+                            style={{ width: "17%" }}
+                          >
+                            {totals.totalEarnings.toLocaleString()}
                           </td>
                         </tr>
                       </thead>
                     </table>
                   </div>
 
-                  <div className="flex flex-col w-1/6">
-                    <h3 className="text-sm font-bold text-blue-800 mb-2">
-                      差引支給額
-                    </h3>
-                    <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-15 flex items-center justify-center">
-                      <p className="text-xl font-bold text-blue-800">
-                        {totals.netPay.toLocaleString()}
-                      </p>
+                  {/* 控除額テーブル */}
+                  <div className="mb-8">
+                    <table
+                      className="w-full border-collapse table-fixed"
+                      style={{ minHeight: "200px" }}
+                    >
+                      <thead>
+                        {/* 1行目: 項目名 */}
+                        <tr className="bg-blue-100">
+                          <th
+                            className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
+                            style={{ width: "8%" }}
+                          >
+                            &nbsp;
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[0]?.name || ""}
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[1]?.name || ""}
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[2]?.name || ""}
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[3]?.name || ""}
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[4]?.name || ""}
+                          </th>
+                          <th
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "17%" }}
+                          >
+                            <input
+                              type="text"
+                              value={
+                                salaryData.deductions[5]?.name || "その他控除"
+                              }
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) =>
+                                updateDeductionItem(5, "name", e.target.value)
+                              }
+                              className="w-full bg-transparent border-none outline-none text-blue-800 font-semibold"
+                              placeholder="その他控除"
+                            />
+                          </th>
+                        </tr>
+                        {/* 2行目: 金額表示 */}
+                        <tr>
+                          <td
+                            className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-bottom"
+                            style={{ width: "8%" }}
+                          >
+                            控
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[0]?.amount &&
+                            salaryData.deductions[0].amount > 0
+                              ? salaryData.deductions[0].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[1]?.amount &&
+                            salaryData.deductions[1].amount > 0
+                              ? salaryData.deductions[1].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[2]?.amount &&
+                            salaryData.deductions[2].amount > 0
+                              ? salaryData.deductions[2].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[3]?.amount &&
+                            salaryData.deductions[3].amount > 0
+                              ? salaryData.deductions[3].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[4]?.amount &&
+                            salaryData.deductions[4].amount > 0
+                              ? salaryData.deductions[4].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "17%" }}
+                          >
+                            {salaryData.deductions[5]?.amount &&
+                            salaryData.deductions[5].amount > 0
+                              ? salaryData.deductions[5].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                        </tr>
+                        {/* 3行目: その他控除の項目名 */}
+                        <tr className="bg-blue-100">
+                          <td
+                            className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-top"
+                            style={{ width: "8%" }}
+                          >
+                            除
+                          </td>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[6]?.name || ""}
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[7]?.name || ""}
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[8]?.name || ""}
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </th>
+                          <th
+                            className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                            style={{ width: "17%" }}
+                          >
+                            控除額合計
+                          </th>
+                        </tr>
+                        {/* 4行目: その他控除の金額 */}
+                        <tr>
+                          <td
+                            className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
+                            style={{ width: "8%" }}
+                          >
+                            {"\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[6]?.amount &&
+                            salaryData.deductions[6].amount > 0
+                              ? salaryData.deductions[6].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[7]?.amount &&
+                            salaryData.deductions[7].amount > 0
+                              ? salaryData.deductions[7].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            {salaryData.deductions[8]?.amount &&
+                            salaryData.deductions[8].amount > 0
+                              ? salaryData.deductions[8].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                            style={{ width: "15%" }}
+                          >
+                            &nbsp;
+                          </td>
+                          <td
+                            className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800 font-bold"
+                            style={{ width: "17%" }}
+                          >
+                            {totals.totalDeductions.toLocaleString()}
+                          </td>
+                        </tr>
+                      </thead>
+                    </table>
+                  </div>
+
+                  {/* 勤怠・差引支給額 */}
+                  <div className="flex gap-8 items-start">
+                    <div className="w-4/5">
+                      <table className="w-full border-collapse table-fixed">
+                        <thead>
+                          <tr className="bg-blue-100">
+                            <th
+                              className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
+                              style={{ width: "12%" }}
+                            >
+                              勤
+                            </th>
+                            <th
+                              className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {salaryData.attendance[0]?.name || ""}
+                            </th>
+                            <th
+                              className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {salaryData.attendance[1]?.name || ""}
+                            </th>
+                            <th
+                              className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {salaryData.attendance[2]?.name || ""}
+                            </th>
+                            <th
+                              className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {salaryData.attendance[3]?.name || ""}
+                            </th>
+                          </tr>
+                          <tr>
+                            <td
+                              className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
+                              style={{ width: "12%" }}
+                            >
+                              怠
+                            </td>
+                            <td
+                              className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {formatAmount(
+                                salaryData.attendance[0]?.amount || 0
+                              )}
+                            </td>
+                            <td
+                              className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {formatAmount(
+                                salaryData.attendance[1]?.amount || 0,
+                                true
+                              )}
+                            </td>
+                            <td
+                              className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {formatAmount(
+                                salaryData.attendance[2]?.amount || 0
+                              )}
+                            </td>
+                            <td
+                              className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
+                              style={{ width: "22%" }}
+                            >
+                              {formatAmount(
+                                salaryData.attendance[3]?.amount || 0
+                              )}
+                            </td>
+                          </tr>
+                        </thead>
+                      </table>
+                    </div>
+
+                    <div className="flex flex-col w-1/6">
+                      <h3 className="text-sm font-bold text-blue-800 mb-2">
+                        差引支給額
+                      </h3>
+                      <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-15 flex items-center justify-center">
+                        <p className="text-xl font-bold text-blue-800">
+                          {totals.netPay.toLocaleString()}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1129,7 +1466,7 @@ export default function Home() {
           </div>
 
           {/* 右サイドバー - 楽天アフィリエイト */}
-          <div className="w-64 flex-shrink-0 hidden xl:block">
+          <div className="w-64 flex-shrink-0 hidden lg:block">
             <div className="bg-white rounded-lg shadow-md p-4 sticky top-8 mr-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                 おすすめ商品
@@ -1138,6 +1475,7 @@ export default function Home() {
                 <div
                   ref={rakutenRefRight}
                   id="rakuten-widget-container-right"
+                  style={{ width: "200px", height: "600px" }}
                 ></div>
               </div>
             </div>
@@ -1163,36 +1501,11 @@ export default function Home() {
             <div
               ref={rakutenRefFooter}
               id="rakuten-widget-container-footer"
+              style={{ width: "600px", height: "200px" }}
             ></div>
           </div>
         </div>
       </footer>
-
-      {/* 楽天ウィジェット用のスクリプト */}
-      <Script
-        id="rakuten-widget-config"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.rakuten_design = "slide";
-            window.rakuten_affiliateId = "4c668102.6b623599.4c668103.ebbd01d1";
-            window.rakuten_items = "ctsmatch";
-            window.rakuten_genreId = "0";
-            window.rakuten_size = "200x600";
-            window.rakuten_target = "_blank";
-            window.rakuten_theme = "gray";
-            window.rakuten_border = "off";
-            window.rakuten_auto_mode = "on";
-            window.rakuten_genre_title = "off";
-            window.rakuten_recommend = "on";
-            window.rakuten_ts = "1757965055333";
-          `,
-        }}
-      />
-      <Script
-        src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"
-        strategy="afterInteractive"
-      />
     </div>
   );
 }
