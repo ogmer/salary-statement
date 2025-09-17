@@ -37,8 +37,6 @@ interface SalaryData {
   employeeName: string;
   year: number;
   month: number;
-  workDays: number;
-  overtimeHours: number;
   earnings: SalaryItem[];
   deductions: SalaryItem[];
   attendance: SalaryItem[];
@@ -110,8 +108,6 @@ export default function Home() {
     employeeName: "",
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
-    workDays: 22,
-    overtimeHours: 0,
     earnings: [...DEFAULT_EARNINGS],
     deductions: [...DEFAULT_DEDUCTIONS],
     attendance: [...DEFAULT_ATTENDANCE],
@@ -581,7 +577,7 @@ export default function Home() {
                             />
                             <input
                               type="number"
-                              value={item.amount}
+                              value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
@@ -665,50 +661,6 @@ export default function Home() {
                         </select>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          htmlFor="work-days"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          労働日数
-                        </label>
-                        <input
-                          id="work-days"
-                          type="number"
-                          value={salaryData.workDays}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              workDays: parseInt(e.target.value) || 0,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="overtime-hours"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          残業時間
-                        </label>
-                        <input
-                          id="overtime-hours"
-                          type="number"
-                          value={salaryData.overtimeHours}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              overtimeHours: parseInt(e.target.value) || 0,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="0"
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   {/* 勤怠項目 */}
@@ -745,7 +697,7 @@ export default function Home() {
                             />
                             <input
                               type="number"
-                              value={item.amount}
+                              value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
@@ -808,7 +760,7 @@ export default function Home() {
                             />
                             <input
                               type="number"
-                              value={item.amount}
+                              value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
