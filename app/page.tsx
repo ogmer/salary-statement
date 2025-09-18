@@ -80,7 +80,7 @@ const DEFAULT_DEDUCTIONS = [
 ];
 
 const DEFAULT_ATTENDANCE = [
-  { name: "出勤日数", amount: 22 },
+  { name: "労働日数", amount: 22 },
   { name: "残業時間", amount: 0 },
   { name: "", amount: 0 },
   { name: "", amount: 0 },
@@ -91,13 +91,13 @@ const TABLE_STYLES = {
   cell: "border-blue-400 px-4 py-2 text-blue-800",
   header: "bg-blue-100",
   labelCell:
-    "border-l border-t border-r border-b border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16",
+    "border-l border-t border-r border-b border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-14",
   dataCell:
     "border-t border-r border-b border-blue-400 px-4 py-2 text-left text-blue-800",
   amountCell:
     "border-r border-b border-blue-400 px-4 py-2 text-right text-blue-800",
   emptyCell:
-    "border-l border-r border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-16",
+    "border-l border-r border-blue-400 px-4 py-2 text-center text-blue-800 bg-blue-200 font-bold w-14",
 } as const;
 
 export default function Home() {
@@ -423,534 +423,537 @@ export default function Home() {
                 )}
               </div>
             </div>
-          </div>
+        </div>
 
           {/* メインコンテンツ */}
           <div className="flex-1 max-w-4xl mx-auto px-4 lg:px-8">
-            <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-              給与明細作成ツール
-            </h1>
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+          給与明細作成ツール
+        </h1>
 
             <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
               テンプレートから給与明細の管理と表示を行うサイトです
             </p>
 
-            {/* 入力フォーム */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-6 text-gray-800">
-                給与明細入力フォーム
-              </h2>
+        {/* 入力フォーム */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-6 text-gray-800">
+            給与明細入力フォーム
+          </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* 左列: 基本情報と支給項目 */}
-                <div className="space-y-6">
-                  {/* 基本情報 */}
-                  <div className="space-y-4">
+            {/* 左列: 基本情報と支給項目 */}
+            <div className="space-y-6">
+              {/* 基本情報 */}
+              <div className="space-y-4">
                     <h3 className="text-lg font-medium text-gray-700">
                       基本情報
                     </h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label
-                          htmlFor="company-name"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          会社名
-                        </label>
-                        <input
-                          id="company-name"
-                          type="text"
-                          value={salaryData.companyName}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              companyName: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="会社名を入力"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="department-name"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          部署名
-                        </label>
-                        <input
-                          id="department-name"
-                          type="text"
-                          value={salaryData.departmentName}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              departmentName: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="部署名を入力"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="employee-number"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          社員番号
-                        </label>
-                        <input
-                          id="employee-number"
-                          type="text"
-                          value={salaryData.employeeNumber}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              employeeNumber: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="社員番号を入力"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="employee-name"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          氏名
-                        </label>
-                        <input
-                          id="employee-name"
-                          type="text"
-                          value={salaryData.employeeName}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              employeeName: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="従業員名を入力"
-                        />
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label
+                      htmlFor="company-name"
+                      className="block text-sm font-medium text-gray-600 mb-1"
+                    >
+                      会社名
+                    </label>
+                    <input
+                      id="company-name"
+                      type="text"
+                      value={salaryData.companyName}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
+                          ...prev,
+                          companyName: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="会社名を入力"
+                    />
                   </div>
+                  <div>
+                    <label
+                      htmlFor="department-name"
+                      className="block text-sm font-medium text-gray-600 mb-1"
+                    >
+                      部署名
+                    </label>
+                    <input
+                      id="department-name"
+                      type="text"
+                      value={salaryData.departmentName}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
+                          ...prev,
+                          departmentName: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="部署名を入力"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="employee-number"
+                      className="block text-sm font-medium text-gray-600 mb-1"
+                    >
+                      社員番号
+                    </label>
+                    <input
+                      id="employee-number"
+                      type="text"
+                      value={salaryData.employeeNumber}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
+                          ...prev,
+                          employeeNumber: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="社員番号を入力"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="employee-name"
+                      className="block text-sm font-medium text-gray-600 mb-1"
+                    >
+                      氏名
+                    </label>
+                    <input
+                      id="employee-name"
+                      type="text"
+                      value={salaryData.employeeName}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
+                          ...prev,
+                          employeeName: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="従業員名を入力"
+                    />
+                  </div>
+                </div>
+              </div>
 
-                  {/* 支給項目 */}
-                  <div className="space-y-4">
+              {/* 支給項目 */}
+              <div className="space-y-4">
                     <h3 className="text-lg font-medium text-gray-700">
                       支給項目
                     </h3>
-                    <div className="space-y-3">
-                      {salaryData.earnings.map(
-                        (item: SalaryItem, index: number) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <input
-                              type="text"
-                              value={item.name}
+                <div className="space-y-3">
+                  {salaryData.earnings.map(
+                    (item: SalaryItem, index: number) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={item.name}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
-                                updateEarningItem(index, "name", e.target.value)
-                              }
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder={
-                                index === 0
-                                  ? "基本給"
-                                  : index === 1
+                            updateEarningItem(index, "name", e.target.value)
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={
+                            index === 0
+                              ? "基本給"
+                              : index === 1
                                   ? "残業手当"
-                                  : index === 2
+                              : index === 2
                                   ? "通勤手当"
-                                  : index === 3
+                              : index === 3
                                   ? "住宅手当"
-                                  : index === 4
-                                  ? "その他手当"
-                                  : index === 5
-                                  ? "その他手当2"
-                                  : index === 6
-                                  ? "その他手当3"
-                                  : index === 7
-                                  ? "その他手当4"
-                                  : "その他手当5"
-                              }
-                            />
-                            <input
-                              type="number"
+                              : index === 4
+                              ? "その他手当"
+                              : index === 5
+                              ? "その他手当2"
+                              : index === 6
+                              ? "その他手当3"
+                              : index === 7
+                              ? "その他手当4"
+                              : "その他手当5"
+                          }
+                        />
+                        <input
+                          type="number"
                               value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
-                                updateEarningItem(
-                                  index,
-                                  "amount",
-                                  parseInt(e.target.value) || 0
-                                )
-                              }
-                              className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              min="0"
-                            />
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 右列: 労働期間と控除項目 */}
-                <div className="space-y-6">
-                  {/* 労働期間 */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
-                      労働期間
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          htmlFor="year"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          年
-                        </label>
-                        <select
-                          id="year"
-                          value={salaryData.year}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              year: parseInt(e.target.value),
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          {Array.from(
-                            { length: 11 },
-                            (_, i) => new Date().getFullYear() - 5 + i
-                          ).map((year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="month"
-                          className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                          月
-                        </label>
-                        <select
-                          id="month"
-                          value={salaryData.month}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                            setSalaryData((prev: SalaryData) => ({
-                              ...prev,
-                              month: parseInt(e.target.value),
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                            (month) => (
-                              <option key={month} value={month}>
-                                {month}
-                              </option>
+                            updateEarningItem(
+                              index,
+                              "amount",
+                              parseInt(e.target.value) || 0
                             )
-                          )}
-                        </select>
+                          }
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="0"
+                        />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* 勤怠項目 */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
-                      勤怠項目
-                    </h3>
-                    <div className="space-y-3">
-                      {salaryData.attendance.map(
-                        (item: SalaryItem, index: number) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <input
-                              type="text"
-                              value={item.name}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) =>
-                                updateAttendanceItem(
-                                  index,
-                                  "name",
-                                  e.target.value
-                                )
-                              }
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder={
-                                index === 0
-                                  ? "出勤日数"
-                                  : index === 1
-                                  ? "残業時間"
-                                  : index === 2
-                                  ? "その他勤怠1"
-                                  : "その他勤怠2"
-                              }
-                            />
-                            <input
-                              type="number"
-                              value={item.amount === 0 ? "" : item.amount}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) =>
-                                updateAttendanceItem(
-                                  index,
-                                  "amount",
-                                  parseInt(e.target.value) || 0
-                                )
-                              }
-                              className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              min="0"
-                            />
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 控除項目 */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
-                      控除項目
-                    </h3>
-                    <div className="space-y-3">
-                      {salaryData.deductions.map(
-                        (item: SalaryItem, index: number) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <input
-                              type="text"
-                              value={item.name}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) =>
-                                updateDeductionItem(
-                                  index,
-                                  "name",
-                                  e.target.value
-                                )
-                              }
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder={
-                                index === 0
-                                  ? "健康保険"
-                                  : index === 1
-                                  ? "厚生年金"
-                                  : index === 2
-                                  ? "雇用保険"
-                                  : index === 3
-                                  ? "所得税"
-                                  : index === 4
-                                  ? "住民税"
-                                  : index === 5
-                                  ? "その他控除1"
-                                  : index === 6
-                                  ? "その他控除2"
-                                  : index === 7
-                                  ? "その他控除3"
-                                  : "その他控除4"
-                              }
-                            />
-                            <input
-                              type="number"
-                              value={item.amount === 0 ? "" : item.amount}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) =>
-                                updateDeductionItem(
-                                  index,
-                                  "amount",
-                                  parseInt(e.target.value) || 0
-                                )
-                              }
-                              className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              min="0"
-                            />
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
+                    )
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* 給与明細プレビュー */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  給与明細プレビュー
-                </h2>
-                <button
-                  onClick={exportToPDF}
-                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  PDFでダウンロード
-                </button>
+            {/* 右列: 労働期間と控除項目 */}
+            <div className="space-y-6">
+              {/* 労働期間 */}
+              <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-700">
+                      労働期間
+                    </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="year"
+                      className="block text-sm font-medium text-gray-600 mb-1"
+                    >
+                      年
+                    </label>
+                    <select
+                      id="year"
+                      value={salaryData.year}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
+                          ...prev,
+                          year: parseInt(e.target.value),
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {Array.from(
+                        { length: 11 },
+                        (_, i) => new Date().getFullYear() - 5 + i
+                      ).map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="month"
+                      className="block text-sm font-medium text-gray-600 mb-1"
+                    >
+                      月
+                    </label>
+                    <select
+                      id="month"
+                      value={salaryData.month}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setSalaryData((prev: SalaryData) => ({
+                          ...prev,
+                          month: parseInt(e.target.value),
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                        (month) => (
+                          <option key={month} value={month}>
+                            {month}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                </div>
               </div>
+
+              {/* 勤怠項目 */}
+              <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-700">
+                      勤怠項目
+                    </h3>
+                <div className="space-y-3">
+                  {salaryData.attendance.map(
+                    (item: SalaryItem, index: number) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={item.name}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) =>
+                                updateAttendanceItem(
+                                  index,
+                                  "name",
+                                  e.target.value
+                                )
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={
+                            index === 0
+                                  ? "労働日数"
+                              : index === 1
+                              ? "残業時間"
+                              : index === 2
+                              ? "その他勤怠1"
+                              : "その他勤怠2"
+                          }
+                        />
+                        <input
+                          type="number"
+                              value={item.amount === 0 ? "" : item.amount}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) =>
+                            updateAttendanceItem(
+                              index,
+                              "amount",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="0"
+                        />
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* 控除項目 */}
+              <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-700">
+                      控除項目
+                    </h3>
+                <div className="space-y-3">
+                  {salaryData.deductions.map(
+                    (item: SalaryItem, index: number) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={item.name}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) =>
+                                updateDeductionItem(
+                                  index,
+                                  "name",
+                                  e.target.value
+                                )
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={
+                            index === 0
+                              ? "健康保険"
+                              : index === 1
+                              ? "厚生年金"
+                              : index === 2
+                              ? "雇用保険"
+                              : index === 3
+                              ? "所得税"
+                              : index === 4
+                              ? "住民税"
+                              : index === 5
+                              ? "その他控除1"
+                              : index === 6
+                              ? "その他控除2"
+                              : index === 7
+                              ? "その他控除3"
+                              : "その他控除4"
+                          }
+                        />
+                        <input
+                          type="number"
+                              value={item.amount === 0 ? "" : item.amount}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) =>
+                            updateDeductionItem(
+                              index,
+                              "amount",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          min="0"
+                        />
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 給与明細プレビュー */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">
+                  <span className="md:hidden" style={{ marginLeft: "50px" }}>
+                    給与明細
+                  </span>
+                  <span className="hidden md:inline">給与明細プレビュー</span>
+            </h2>
+            <button
+              onClick={exportToPDF}
+              className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              PDFでダウンロード
+            </button>
+          </div>
 
               {/* スマホ版では非表示、PC版では表示 */}
               <div className="hidden md:block">
-                <div id="salary-statement" className="bg-white p-8">
-                  {/* 給与明細のヘッダー */}
-                  <div className="mb-8">
-                    {/* 1行目: 会社名 | 給与明細書 | 社員番号 */}
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div>
+          <div id="salary-statement" className="bg-white p-8">
+            {/* 給与明細のヘッダー */}
+            <div className="mb-8">
+              {/* 1行目: 会社名 | 給与明細書 | 社員番号 */}
+                    <div className="grid grid-cols-3 gap-1 mb-4">
+                <div>
                         <p className="text-gray-800">
-                          会社名: {salaryData.companyName || ""}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <h1 className="text-3xl font-bold text-blue-800">
-                          給与明細書
-                        </h1>
-                      </div>
-                      <div>
+                    会社名: {salaryData.companyName || ""}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <h1 className="text-3xl font-bold text-blue-800">
+                    給与明細書
+                  </h1>
+                </div>
+                <div>
                         <p
                           className="text-gray-800"
                           style={{ textAlign: "left", paddingLeft: "25%" }}
                         >
-                          社員番号: {salaryData.employeeNumber || ""}
-                        </p>
-                      </div>
-                    </div>
+                    社員番号: {salaryData.employeeNumber || ""}
+                  </p>
+                </div>
+              </div>
 
-                    {/* 2行目: 部署名 | 年月 | 氏名 */}
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
+              {/* 2行目: 部署名 | 年月 | 氏名 */}
+                    <div className="grid grid-cols-3 gap-1">
+                <div>
                         <p className="text-gray-800">
-                          部署名: {salaryData.departmentName || ""}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xl font-medium text-blue-600">
-                          {salaryData.year}年 {salaryData.month}月分
-                        </p>
-                      </div>
-                      <div>
+                    部署名: {salaryData.departmentName || ""}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-medium text-blue-600">
+                    {salaryData.year}年 {salaryData.month}月分
+                  </p>
+                </div>
+                <div>
                         <p
                           className="text-gray-800"
                           style={{ textAlign: "left", paddingLeft: "25%" }}
                         >
-                          氏名: {salaryData.employeeName || ""}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                    氏名: {salaryData.employeeName || ""}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-                  {/* 支給額テーブル */}
-                  <div className="mb-8">
+            {/* 支給額テーブル */}
+            <div className="mb-8">
                     <table
                       className="w-full border-collapse table-fixed"
                       style={{ minHeight: "200px" }}
                     >
-                      <thead>
-                        {/* 1行目: 項目名 */}
-                        <tr className="bg-blue-100">
+                <thead>
+                  {/* 1行目: 項目名 */}
+                  <tr className="bg-blue-100">
                           <th
                             className="border-l border-t border-r border-blue-400 px-2 py-3 text-center text-blue-800 bg-blue-200 font-bold h-16"
                             style={{ width: "8%" }}
                           >
-                            &nbsp;
-                          </th>
+                      &nbsp;
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[0]?.name || ""}
-                          </th>
+                      {salaryData.earnings[0]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[1]?.name || ""}
-                          </th>
+                      {salaryData.earnings[1]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[2]?.name || ""}
-                          </th>
+                      {salaryData.earnings[2]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[3]?.name || ""}
-                          </th>
+                      {salaryData.earnings[3]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[4]?.name || ""}
-                          </th>
+                      {salaryData.earnings[4]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
                             style={{ width: "17%" }}
                           >
                             {salaryData.earnings[5]?.name || ""}
                           </th>
-                        </tr>
-                        {/* 2行目: 金額表示 */}
-                        <tr>
+                  </tr>
+                  {/* 2行目: 金額表示 */}
+                  <tr>
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-bottom"
                             style={{ width: "8%" }}
                           >
-                            支
-                          </td>
+                      支
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[0]?.amount &&
-                            salaryData.earnings[0].amount > 0
-                              ? salaryData.earnings[0].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[0]?.amount &&
+                      salaryData.earnings[0].amount > 0
+                        ? salaryData.earnings[0].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[1]?.amount &&
-                            salaryData.earnings[1].amount > 0
-                              ? salaryData.earnings[1].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[1]?.amount &&
+                      salaryData.earnings[1].amount > 0
+                        ? salaryData.earnings[1].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[2]?.amount &&
-                            salaryData.earnings[2].amount > 0
-                              ? salaryData.earnings[2].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[2]?.amount &&
+                      salaryData.earnings[2].amount > 0
+                        ? salaryData.earnings[2].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[3]?.amount &&
-                            salaryData.earnings[3].amount > 0
-                              ? salaryData.earnings[3].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[3]?.amount &&
+                      salaryData.earnings[3].amount > 0
+                        ? salaryData.earnings[3].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[4]?.amount &&
-                            salaryData.earnings[4].amount > 0
-                              ? salaryData.earnings[4].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[4]?.amount &&
+                      salaryData.earnings[4].amount > 0
+                        ? salaryData.earnings[4].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "17%" }}
@@ -960,33 +963,33 @@ export default function Home() {
                               ? salaryData.earnings[5].amount.toLocaleString()
                               : "\u00A0"}
                           </td>
-                        </tr>
-                        {/* 3行目: その他手当の項目名 */}
-                        <tr className="bg-blue-100">
+                  </tr>
+                  {/* 3行目: その他手当の項目名 */}
+                  <tr className="bg-blue-100">
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-top"
                             style={{ width: "8%" }}
                           >
-                            給
-                          </td>
+                      給
+                    </td>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[6]?.name || ""}
-                          </th>
+                      {salaryData.earnings[6]?.name || ""}
+                    </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[7]?.name || ""}
-                          </th>
+                      {salaryData.earnings[7]?.name || ""}
+                    </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[8]?.name || ""}
-                          </th>
+                      {salaryData.earnings[8]?.name || ""}
+                    </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
@@ -1003,44 +1006,44 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
                           >
-                            支給額合計
-                          </th>
-                        </tr>
-                        {/* 4行目: その他手当の金額 */}
-                        <tr>
+                      支給額合計
+                    </th>
+                  </tr>
+                  {/* 4行目: その他手当の金額 */}
+                  <tr>
                           <td
                             className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
                             style={{ width: "8%" }}
                           >
-                            {"\u00A0"}
-                          </td>
+                      {"\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[6]?.amount &&
-                            salaryData.earnings[6].amount > 0
-                              ? salaryData.earnings[6].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[6]?.amount &&
+                      salaryData.earnings[6].amount > 0
+                        ? salaryData.earnings[6].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[7]?.amount &&
-                            salaryData.earnings[7].amount > 0
-                              ? salaryData.earnings[7].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[7]?.amount &&
+                      salaryData.earnings[7].amount > 0
+                        ? salaryData.earnings[7].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.earnings[8]?.amount &&
-                            salaryData.earnings[8].amount > 0
-                              ? salaryData.earnings[8].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.earnings[8]?.amount &&
+                      salaryData.earnings[8].amount > 0
+                        ? salaryData.earnings[8].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
@@ -1057,58 +1060,58 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800 font-bold"
                             style={{ width: "17%" }}
                           >
-                            {totals.totalEarnings.toLocaleString()}
-                          </td>
-                        </tr>
-                      </thead>
-                    </table>
-                  </div>
+                      {totals.totalEarnings.toLocaleString()}
+                    </td>
+                  </tr>
+                </thead>
+              </table>
+            </div>
 
-                  {/* 控除額テーブル */}
-                  <div className="mb-8">
+            {/* 控除額テーブル */}
+            <div className="mb-8">
                     <table
                       className="w-full border-collapse table-fixed"
                       style={{ minHeight: "200px" }}
                     >
-                      <thead>
-                        {/* 1行目: 項目名 */}
-                        <tr className="bg-blue-100">
+                <thead>
+                  {/* 1行目: 項目名 */}
+                  <tr className="bg-blue-100">
                           <th
                             className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
                             style={{ width: "8%" }}
                           >
-                            &nbsp;
-                          </th>
+                      &nbsp;
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[0]?.name || ""}
-                          </th>
+                      {salaryData.deductions[0]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[1]?.name || ""}
-                          </th>
+                      {salaryData.deductions[1]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[2]?.name || ""}
-                          </th>
+                      {salaryData.deductions[2]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[3]?.name || ""}
-                          </th>
+                      {salaryData.deductions[3]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[4]?.name || ""}
-                          </th>
+                      {salaryData.deductions[4]?.name || ""}
+                    </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
@@ -1127,60 +1130,60 @@ export default function Home() {
                               placeholder="その他控除"
                             />
                           </th>
-                        </tr>
-                        {/* 2行目: 金額表示 */}
-                        <tr>
+                  </tr>
+                  {/* 2行目: 金額表示 */}
+                  <tr>
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-bottom"
                             style={{ width: "8%" }}
                           >
-                            控
-                          </td>
+                      控
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[0]?.amount &&
-                            salaryData.deductions[0].amount > 0
-                              ? salaryData.deductions[0].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[0]?.amount &&
+                      salaryData.deductions[0].amount > 0
+                        ? salaryData.deductions[0].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[1]?.amount &&
-                            salaryData.deductions[1].amount > 0
-                              ? salaryData.deductions[1].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[1]?.amount &&
+                      salaryData.deductions[1].amount > 0
+                        ? salaryData.deductions[1].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[2]?.amount &&
-                            salaryData.deductions[2].amount > 0
-                              ? salaryData.deductions[2].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[2]?.amount &&
+                      salaryData.deductions[2].amount > 0
+                        ? salaryData.deductions[2].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[3]?.amount &&
-                            salaryData.deductions[3].amount > 0
-                              ? salaryData.deductions[3].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[3]?.amount &&
+                      salaryData.deductions[3].amount > 0
+                        ? salaryData.deductions[3].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[4]?.amount &&
-                            salaryData.deductions[4].amount > 0
-                              ? salaryData.deductions[4].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[4]?.amount &&
+                      salaryData.deductions[4].amount > 0
+                        ? salaryData.deductions[4].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "17%" }}
@@ -1190,33 +1193,33 @@ export default function Home() {
                               ? salaryData.deductions[5].amount.toLocaleString()
                               : "\u00A0"}
                           </td>
-                        </tr>
-                        {/* 3行目: その他控除の項目名 */}
-                        <tr className="bg-blue-100">
+                  </tr>
+                  {/* 3行目: その他控除の項目名 */}
+                  <tr className="bg-blue-100">
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-top"
                             style={{ width: "8%" }}
                           >
-                            除
-                          </td>
+                      除
+                    </td>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[6]?.name || ""}
-                          </th>
+                      {salaryData.deductions[6]?.name || ""}
+                    </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[7]?.name || ""}
-                          </th>
+                      {salaryData.deductions[7]?.name || ""}
+                    </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[8]?.name || ""}
-                          </th>
+                      {salaryData.deductions[8]?.name || ""}
+                    </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
@@ -1233,44 +1236,44 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
                           >
-                            控除額合計
-                          </th>
-                        </tr>
-                        {/* 4行目: その他控除の金額 */}
-                        <tr>
+                      控除額合計
+                    </th>
+                  </tr>
+                  {/* 4行目: その他控除の金額 */}
+                  <tr>
                           <td
                             className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
                             style={{ width: "8%" }}
                           >
-                            {"\u00A0"}
-                          </td>
+                      {"\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[6]?.amount &&
-                            salaryData.deductions[6].amount > 0
-                              ? salaryData.deductions[6].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[6]?.amount &&
+                      salaryData.deductions[6].amount > 0
+                        ? salaryData.deductions[6].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[7]?.amount &&
-                            salaryData.deductions[7].amount > 0
-                              ? salaryData.deductions[7].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[7]?.amount &&
+                      salaryData.deductions[7].amount > 0
+                        ? salaryData.deductions[7].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                            {salaryData.deductions[8]?.amount &&
-                            salaryData.deductions[8].amount > 0
-                              ? salaryData.deductions[8].amount.toLocaleString()
-                              : "\u00A0"}
-                          </td>
+                      {salaryData.deductions[8]?.amount &&
+                      salaryData.deductions[8].amount > 0
+                        ? salaryData.deductions[8].amount.toLocaleString()
+                        : "\u00A0"}
+                    </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
@@ -1287,57 +1290,57 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800 font-bold"
                             style={{ width: "17%" }}
                           >
-                            {totals.totalDeductions.toLocaleString()}
-                          </td>
-                        </tr>
-                      </thead>
-                    </table>
-                  </div>
+                      {totals.totalDeductions.toLocaleString()}
+                    </td>
+                  </tr>
+                </thead>
+              </table>
+            </div>
 
-                  {/* 勤怠・差引支給額 */}
-                  <div className="flex gap-8 items-start">
-                    <div className="w-4/5">
-                      <table className="w-full border-collapse table-fixed">
-                        <thead>
-                          <tr className="bg-blue-100">
+            {/* 勤怠・差引支給額 */}
+            <div className="flex gap-8 items-start">
+              <div className="w-4/5">
+                <table className="w-full border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-blue-100">
                             <th
                               className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
-                              style={{ width: "12%" }}
+                              style={{ width: "10%" }}
                             >
-                              勤
-                            </th>
+                        勤
+                      </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                              {salaryData.attendance[0]?.name || ""}
-                            </th>
+                        {salaryData.attendance[0]?.name || ""}
+                      </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                              {salaryData.attendance[1]?.name || ""}
-                            </th>
+                        {salaryData.attendance[1]?.name || ""}
+                      </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                              {salaryData.attendance[2]?.name || ""}
-                            </th>
+                        {salaryData.attendance[2]?.name || ""}
+                      </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                              {salaryData.attendance[3]?.name || ""}
-                            </th>
-                          </tr>
-                          <tr>
+                        {salaryData.attendance[3]?.name || ""}
+                      </th>
+                    </tr>
+                    <tr>
                             <td
                               className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
-                              style={{ width: "12%" }}
+                              style={{ width: "10%" }}
                             >
-                              怠
-                            </td>
+                        怠
+                      </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
@@ -1345,16 +1348,16 @@ export default function Home() {
                               {formatAmount(
                                 salaryData.attendance[0]?.amount || 0
                               )}
-                            </td>
+                      </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
                             >
-                              {formatAmount(
-                                salaryData.attendance[1]?.amount || 0,
-                                true
-                              )}
-                            </td>
+                        {formatAmount(
+                          salaryData.attendance[1]?.amount || 0,
+                          true
+                        )}
+                      </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
@@ -1362,7 +1365,7 @@ export default function Home() {
                               {formatAmount(
                                 salaryData.attendance[2]?.amount || 0
                               )}
-                            </td>
+                      </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
@@ -1370,26 +1373,26 @@ export default function Home() {
                               {formatAmount(
                                 salaryData.attendance[3]?.amount || 0
                               )}
-                            </td>
-                          </tr>
-                        </thead>
-                      </table>
-                    </div>
+                      </td>
+                    </tr>
+                  </thead>
+                </table>
+              </div>
 
-                    <div className="flex flex-col w-1/6">
-                      <h3 className="text-sm font-bold text-blue-800 mb-2">
-                        差引支給額
-                      </h3>
-                      <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-15 flex items-center justify-center">
-                        <p className="text-xl font-bold text-blue-800">
-                          {totals.netPay.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              <div className="flex flex-col w-1/6">
+                <h3 className="text-sm font-bold text-blue-800 mb-2">
+                  差引支給額
+                </h3>
+                <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-15 flex items-center justify-center">
+                  <p className="text-xl font-bold text-blue-800">
+                    {totals.netPay.toLocaleString()}
+                  </p>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
           </div>
 
           {/* 右サイドバー - 楽天アフィリエイト（PC版のみ） */}
