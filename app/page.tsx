@@ -1,29 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import Script from "next/script";
+import React, { useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
-// 楽天ウィジェットの型定義
-declare global {
-  interface Window {
-    rakuten_widget: (containerId: string) => void;
-    rakuten_design: string;
-    rakuten_affiliateId: string;
-    rakuten_items: string;
-    rakuten_genreId: string;
-    rakuten_size: string;
-    rakuten_target: string;
-    rakuten_theme: string;
-    rakuten_border: string;
-    rakuten_auto_mode: string;
-    rakuten_genre_title: string;
-    rakuten_recommend: string;
-    rakuten_ts: string;
-  }
-}
 
 interface SalaryItem {
   name: string;
@@ -112,16 +91,6 @@ export default function Home() {
     deductions: [...DEFAULT_DEDUCTIONS],
     attendance: [...DEFAULT_ATTENDANCE],
   });
-
-  const rakutenRef = useRef<HTMLDivElement>(null);
-  const rakutenRefRight = useRef<HTMLDivElement>(null);
-  const rakutenRefFooter = useRef<HTMLDivElement>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  // クライアントサイドでのみ実行
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // 計算処理
   const calculateTotals = () => {
@@ -374,59 +343,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="w-full px-0">
-        <div className="flex">
-          {/* 左サイドバー - 楽天アフィリエイト（PC版のみ） */}
-          <div className="w-64 flex-shrink-0 hidden xl:block">
-            <div className="bg-white rounded-lg shadow-md p-4 sticky top-8 ml-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                おすすめ商品
-              </h3>
-              <div className="flex justify-center">
-                {isClient ? (
-                  <div
-                    ref={rakutenRef}
-                    id="rakuten-widget-container-left"
-                    style={{ width: "200px", height: "600px" }}
-                    dangerouslySetInnerHTML={{
-                      __html: `
-                        <script type="text/javascript">
-                          rakuten_design="slide";
-                          rakuten_affiliateId="4c668102.6b623599.4c668103.ebbd01d1";
-                          rakuten_items="ctsmatch";
-                          rakuten_genreId="0";
-                          rakuten_size="200x600";
-                          rakuten_target="_blank";
-                          rakuten_theme="gray";
-                          rakuten_border="off";
-                          rakuten_auto_mode="on";
-                          rakuten_genre_title="off";
-                          rakuten_recommend="on";
-                          rakuten_ts="1758116288140";
-                        </script>
-                        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-                      `,
-                    }}
-                  ></div>
-                ) : (
-                  <div
-                    style={{
-                      width: "200px",
-                      height: "600px",
-                      backgroundColor: "#f3f4f6",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span className="text-gray-500 text-sm">読み込み中...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-        </div>
-
+        <div className="flex justify-center">
           {/* メインコンテンツ */}
-          <div className="flex-1 max-w-4xl mx-auto px-4 lg:px-8">
+          <div className="max-w-4xl mx-auto px-4 lg:px-8">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
           給与明細作成ツール
         </h1>
@@ -803,9 +722,9 @@ export default function Home() {
               <div className="hidden md:block">
           <div id="salary-statement" className="bg-white p-8">
             {/* 給与明細のヘッダー */}
-            <div className="mb-8">
+            <div className="mb-4">
               {/* 1行目: 会社名 | 給与明細書 | 社員番号 */}
-                    <div className="grid grid-cols-3 gap-1 mb-4">
+                    <div className="grid grid-cols-3 gap-0 mb-2">
                 <div>
                         <p className="text-gray-800">
                     会社名: {salaryData.companyName || ""}
@@ -819,7 +738,7 @@ export default function Home() {
                 <div>
                         <p
                           className="text-gray-800"
-                          style={{ textAlign: "left", paddingLeft: "25%" }}
+                          style={{ textAlign: "left", paddingLeft: "10%" }}
                         >
                     社員番号: {salaryData.employeeNumber || ""}
                   </p>
@@ -827,7 +746,7 @@ export default function Home() {
               </div>
 
               {/* 2行目: 部署名 | 年月 | 氏名 */}
-                    <div className="grid grid-cols-3 gap-1">
+                    <div className="grid grid-cols-3 gap-0">
                 <div>
                         <p className="text-gray-800">
                     部署名: {salaryData.departmentName || ""}
@@ -841,7 +760,7 @@ export default function Home() {
                 <div>
                         <p
                           className="text-gray-800"
-                          style={{ textAlign: "left", paddingLeft: "25%" }}
+                          style={{ textAlign: "left", paddingLeft: "10%" }}
                         >
                     氏名: {salaryData.employeeName || ""}
                   </p>
@@ -859,43 +778,43 @@ export default function Home() {
                   {/* 1行目: 項目名 */}
                   <tr className="bg-blue-100">
                           <th
-                            className="border-l border-t border-r border-blue-400 px-2 py-3 text-center text-blue-800 bg-blue-200 font-bold h-16"
+                            className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
                             style={{ width: "8%" }}
                           >
                       &nbsp;
                     </th>
                           <th
-                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
                       {salaryData.earnings[0]?.name || ""}
                     </th>
                           <th
-                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
                       {salaryData.earnings[1]?.name || ""}
                     </th>
                           <th
-                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
                       {salaryData.earnings[2]?.name || ""}
                     </th>
                           <th
-                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
                       {salaryData.earnings[3]?.name || ""}
                     </th>
                           <th
-                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
                       {salaryData.earnings[4]?.name || ""}
                     </th>
                           <th
-                            className="border-t border-r border-b border-blue-400 px-2 py-3 text-left text-blue-800 h-16"
+                            className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
                           >
                             {salaryData.earnings[5]?.name || ""}
@@ -1383,7 +1302,7 @@ export default function Home() {
                 <h3 className="text-sm font-bold text-blue-800 mb-2">
                   差引支給額
                 </h3>
-                <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-15 flex items-center justify-center">
+                <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-16 flex items-center justify-center">
                   <p className="text-xl font-bold text-blue-800">
                     {totals.netPay.toLocaleString()}
                   </p>
@@ -1393,118 +1312,24 @@ export default function Home() {
           </div>
         </div>
       </div>
-          </div>
+    </div>
+    </div>
+    </div>
 
-          {/* 右サイドバー - 楽天アフィリエイト（PC版のみ） */}
-          <div className="w-64 flex-shrink-0 hidden xl:block">
-            <div className="bg-white rounded-lg shadow-md p-4 sticky top-8 mr-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                おすすめ商品
-              </h3>
-              <div className="flex justify-center">
-                {isClient ? (
-                  <div
-                    ref={rakutenRefRight}
-                    id="rakuten-widget-container-right"
-                    style={{ width: "200px", height: "600px" }}
-                    dangerouslySetInnerHTML={{
-                      __html: `
-                        <script type="text/javascript">
-                          rakuten_design="slide";
-                          rakuten_affiliateId="4c668102.6b623599.4c668103.ebbd01d1";
-                          rakuten_items="ctsmatch";
-                          rakuten_genreId="0";
-                          rakuten_size="200x600";
-                          rakuten_target="_blank";
-                          rakuten_theme="gray";
-                          rakuten_border="off";
-                          rakuten_auto_mode="on";
-                          rakuten_genre_title="off";
-                          rakuten_recommend="on";
-                          rakuten_ts="1758116288140";
-                        </script>
-                        <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-                      `,
-                    }}
-                  ></div>
-                ) : (
-                  <div
-                    style={{
-                      width: "200px",
-                      height: "600px",
-                      backgroundColor: "#f3f4f6",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span className="text-gray-500 text-sm">読み込み中...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+    {/* フッター */}
+    <footer className="bg-gray-50 mt-12">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="text-center">
+          <p className="text-sm text-gray-600 mb-2">お問い合わせ先</p>
+          <a
+            href="mailto:ogmer.net@gmail.com"
+            className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
+          >
+            ogmer.net@gmail.com
+          </a>
         </div>
       </div>
-
-      {/* フッター */}
-      <footer className="bg-gray-50 mt-12">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">お問い合わせ先</p>
-            <a
-              href="mailto:ogmer.net@gmail.com"
-              className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
-            >
-              ogmer.net@gmail.com
-            </a>
-          </div>
-
-          {/* フッター用楽天ウィジェット（全画面サイズで表示） */}
-          <div className="mt-8 flex justify-center">
-            {isClient ? (
-              <div
-                ref={rakutenRefFooter}
-                id="rakuten-widget-container-footer"
-                className="w-full max-w-2xl"
-                style={{ height: "200px" }}
-                dangerouslySetInnerHTML={{
-                  __html: `
-                    <script type="text/javascript">
-                      rakuten_design="slide";
-                      rakuten_affiliateId="4c668102.6b623599.4c668103.ebbd01d1";
-                      rakuten_items="ctsmatch";
-                      rakuten_genreId="0";
-                      rakuten_size="600x200";
-                      rakuten_target="_blank";
-                      rakuten_theme="gray";
-                      rakuten_border="off";
-                      rakuten_auto_mode="on";
-                      rakuten_genre_title="off";
-                      rakuten_recommend="on";
-                      rakuten_ts="1758116288140";
-                    </script>
-                    <script type="text/javascript" src="https://xml.affiliate.rakuten.co.jp/widget/js/rakuten_widget.js?20230106"></script>
-                  `,
-                }}
-              ></div>
-            ) : (
-              <div
-                className="w-full max-w-2xl"
-                style={{
-                  height: "200px",
-                  backgroundColor: "#f3f4f6",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span className="text-gray-500 text-sm">読み込み中...</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </footer>
+    </footer>
     </div>
   );
 }
