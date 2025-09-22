@@ -346,12 +346,15 @@ export default function Home() {
         <div className="flex justify-center">
           {/* メインコンテンツ */}
           <div className="max-w-4xl mx-auto px-4 lg:px-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+        <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">
           給与明細作成ツール
         </h1>
 
+            <p className="text-gray-600 text-center mb-2 max-w-2xl mx-auto leading-relaxed">
+              ✓  テンプレートから給与明細の管理と表示を行うサイトです
+            </p>
             <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
-              テンプレートから給与明細の管理と表示を行うサイトです
+              ✓  自動で計算を行い、データを保存されることはありません
             </p>
 
         {/* 入力フォーム */}
@@ -1320,7 +1323,7 @@ export default function Home() {
     <footer className="bg-gray-50 mt-12">
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="text-center">
-          <p className="text-sm text-gray-600 mb-2">お問い合わせ先</p>
+          <p className="text-sm text-gray-600 mb-2">お問い合わせ先はこちら</p>
           <a
             href="mailto:ogmer.net@gmail.com"
             className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
