@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 interface SalaryItem {
   name: string;
@@ -219,6 +217,12 @@ export default function Home() {
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
+      // 動的にライブラリをインポート
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas")
+      ]);
+
       // html2canvasで要素をキャプチャ（高品質設定）
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -341,16 +345,28 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="w-full px-0">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 relative">
+      {/* 軽量化された背景要素 */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-100 rounded-full opacity-30"></div>
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-100 rounded-full opacity-30"></div>
+      </div>
+
+      <div className="w-full px-0 relative z-10">
         <div className="flex justify-center">
           {/* メインコンテンツ */}
           <div className="max-w-4xl mx-auto px-4 lg:px-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">
-          給与明細作成ツール
-        </h1>
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4 shadow-lg">
+            <span className="text-2xl">💰</span>
+          </div>
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+            給与明細作成ツール
+          </h1>
+          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
+        </div>
 
-            <p className="text-gray-600 text-center mb-2 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto leading-relaxed">
               ✓  テンプレートから給与明細の管理と表示を行うサイトです
             </p>
             <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
@@ -358,7 +374,7 @@ export default function Home() {
             </p>
 
         {/* 入力フォーム */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-white/90 rounded-xl shadow-lg border border-white/20 p-6 mb-8 hover:shadow-xl transition-shadow duration-200">
           <h2 className="text-xl font-semibold mb-6 text-gray-800">
             給与明細入力フォーム
           </h2>
@@ -389,7 +405,7 @@ export default function Home() {
                           companyName: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                       placeholder="会社名を入力"
                     />
                   </div>
@@ -410,7 +426,7 @@ export default function Home() {
                           departmentName: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                       placeholder="部署名を入力"
                     />
                   </div>
@@ -431,7 +447,7 @@ export default function Home() {
                           employeeNumber: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                       placeholder="社員番号を入力"
                     />
                   </div>
@@ -452,7 +468,7 @@ export default function Home() {
                           employeeName: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                       placeholder="従業員名を入力"
                     />
                   </div>
@@ -476,7 +492,7 @@ export default function Home() {
                               ) =>
                             updateEarningItem(index, "name", e.target.value)
                           }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                           placeholder={
                             index === 0
                               ? "基本給"
@@ -509,7 +525,7 @@ export default function Home() {
                               parseInt(e.target.value) || 0
                             )
                           }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                           min="0"
                         />
                       </div>
@@ -543,7 +559,7 @@ export default function Home() {
                           year: parseInt(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                     >
                       {Array.from(
                         { length: 11 },
@@ -571,7 +587,7 @@ export default function Home() {
                           month: parseInt(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                     >
                       {Array.from({ length: 12 }, (_, i) => i + 1).map(
                         (month) => (
@@ -606,7 +622,7 @@ export default function Home() {
                                   e.target.value
                                 )
                           }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                           placeholder={
                             index === 0
                                   ? "労働日数"
@@ -629,7 +645,7 @@ export default function Home() {
                               parseInt(e.target.value) || 0
                             )
                           }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                           min="0"
                         />
                       </div>
@@ -659,7 +675,7 @@ export default function Home() {
                                   e.target.value
                                 )
                           }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                           placeholder={
                             index === 0
                               ? "健康保険"
@@ -692,7 +708,7 @@ export default function Home() {
                               parseInt(e.target.value) || 0
                             )
                           }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
                           min="0"
                         />
                       </div>
@@ -705,7 +721,7 @@ export default function Home() {
         </div>
 
         {/* 給与明細プレビュー */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white/90 rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-shadow duration-200">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">
                   <span className="md:hidden" style={{ marginLeft: "50px" }}>
@@ -715,9 +731,9 @@ export default function Home() {
             </h2>
             <button
               onClick={exportToPDF}
-              className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
             >
-              PDFでダウンロード
+              📄 PDFでダウンロード
             </button>
           </div>
 
@@ -1320,10 +1336,10 @@ export default function Home() {
     </div>
 
     {/* フッター */}
-    <footer className="bg-gray-50 mt-12">
+    <footer className="bg-white mt-12">
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="text-center">
-          <p className="text-sm text-gray-600 mb-2">お問い合わせ先はこちら</p>
+          <p className="text-sm text-gray-600 mb-2">お問い合わせ先</p>
           <a
             href="mailto:ogmer.net@gmail.com"
             className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
