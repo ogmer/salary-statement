@@ -31,6 +31,101 @@ interface TableCell {
   isHeader?: boolean;
 }
 
+// セキュリティ: 入力検証とサニタイゼーション関数
+const MAX_STRING_LENGTH = 100;
+const MAX_AMOUNT = 999999999;
+const MIN_AMOUNT = 0;
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2100;
+const MIN_MONTH = 1;
+const MAX_MONTH = 12;
+
+// XSS対策: HTMLエスケープ関数
+const escapeHtml = (text: string): string => {
+  const map: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m] || m);
+};
+
+// 文字列入力のサニタイゼーション
+// 注意: Reactは自動的にエスケープするため、ここでは制御文字の除去と長さ制限のみを行う
+const sanitizeString = (input: string, maxLength: number = MAX_STRING_LENGTH): string => {
+  if (typeof input !== "string") {
+    return "";
+  }
+  // 制御文字を除去（改行文字は許可）
+  let sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  // 長さ制限
+  sanitized = sanitized.slice(0, maxLength);
+  // Reactが自動的にエスケープするため、ここではエスケープしない
+  return sanitized;
+};
+
+// 数値入力の検証とサニタイゼーション
+const sanitizeNumber = (
+  input: string | number,
+  min: number = MIN_AMOUNT,
+  max: number = MAX_AMOUNT
+): number => {
+  if (typeof input === "number") {
+    if (isNaN(input) || !isFinite(input)) {
+      return 0;
+    }
+    return Math.max(min, Math.min(max, Math.floor(input)));
+  }
+
+  if (typeof input !== "string") {
+    return 0;
+  }
+
+  // 数値以外の文字を除去（負の符号と小数点は許可しない）
+  const cleaned = input.replace(/[^\d]/g, "");
+  if (cleaned === "") {
+    return 0;
+  }
+
+  const num = parseInt(cleaned, 10);
+  if (isNaN(num) || !isFinite(num)) {
+    return 0;
+  }
+
+  return Math.max(min, Math.min(max, num));
+};
+
+// 年入力の検証
+const sanitizeYear = (input: string | number): number => {
+  const year = sanitizeNumber(input, MIN_YEAR, MAX_YEAR);
+  return year;
+};
+
+// 月入力の検証
+const sanitizeMonth = (input: string | number): number => {
+  const month = sanitizeNumber(input, MIN_MONTH, MAX_MONTH);
+  return month;
+};
+
+// ファイル名のサニタイゼーション（強化版）
+const sanitizeFileName = (str: string): string => {
+  if (typeof str !== "string") {
+    return "unknown";
+  }
+  // 危険な文字を除去
+  let sanitized = str.replace(/[<>:"/\\|?*\x00-\x1F\x7F]/g, "_");
+  // 連続するアンダースコアを1つに
+  sanitized = sanitized.replace(/_+/g, "_");
+  // 先頭・末尾のアンダースコアを除去
+  sanitized = sanitized.replace(/^_+|_+$/g, "");
+  // 長さ制限（ファイルシステムの制限を考慮）
+  sanitized = sanitized.slice(0, 100);
+  // 空文字列の場合はデフォルト値を返す
+  return sanitized || "unknown";
+};
+
 // 定数と設定値
 const DEFAULT_EARNINGS = [
   { name: "基本給", amount: 0 },
@@ -148,7 +243,15 @@ export default function Home() {
     setSalaryData((prev: SalaryData) => ({
       ...prev,
       earnings: prev.earnings.map((item: SalaryItem, i: number) =>
-        i === index ? { ...item, [field]: value } : item
+        i === index
+          ? {
+              ...item,
+              [field]:
+                field === "name"
+                  ? sanitizeString(value as string)
+                  : sanitizeNumber(value as string | number),
+            }
+          : item
       ),
     }));
   };
@@ -161,7 +264,15 @@ export default function Home() {
     setSalaryData((prev: SalaryData) => ({
       ...prev,
       deductions: prev.deductions.map((item: SalaryItem, i: number) =>
-        i === index ? { ...item, [field]: value } : item
+        i === index
+          ? {
+              ...item,
+              [field]:
+                field === "name"
+                  ? sanitizeString(value as string)
+                  : sanitizeNumber(value as string | number),
+            }
+          : item
       ),
     }));
   };
@@ -174,7 +285,15 @@ export default function Home() {
     setSalaryData((prev: SalaryData) => ({
       ...prev,
       attendance: prev.attendance.map((item: SalaryItem, i: number) =>
-        i === index ? { ...item, [field]: value } : item
+        i === index
+          ? {
+              ...item,
+              [field]:
+                field === "name"
+                  ? sanitizeString(value as string)
+                  : sanitizeNumber(value as string | number, 0, 9999),
+            }
+          : item
       ),
     }));
   };
@@ -212,6 +331,7 @@ export default function Home() {
         element.style.zIndex = "9999";
         element.style.width = "800px";
         element.style.height = "auto";
+        element.style.margin = "0 auto";
 
         // レンダリングを待つ
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -268,9 +388,12 @@ export default function Home() {
       const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+      // 中央揃えのためのX座標を計算
+      const xPosition = (pageWidth - imgWidth) / 2;
+
       // PDFに画像を追加
       if (imgHeight <= contentHeight) {
-        pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", xPosition, margin, imgWidth, imgHeight);
       } else {
         // 複数ページに分割
         let yPosition = margin;
@@ -281,7 +404,7 @@ export default function Home() {
           pdf.addImage(
             imgData,
             "PNG",
-            margin,
+            xPosition,
             yPosition,
             imgWidth,
             currentPageHeight,
@@ -345,36 +468,25 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 relative">
-      {/* 軽量化された背景要素 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-100 rounded-full opacity-30"></div>
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-100 rounded-full opacity-30"></div>
-      </div>
-
-      <div className="w-full px-0 relative z-10">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="w-full px-0">
         <div className="flex justify-center">
-          {/* メインコンテンツ */}
           <div className="max-w-4xl mx-auto px-4 lg:px-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4 shadow-lg">
-            <span className="text-2xl">💰</span>
-          </div>
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             給与明細作成ツール
           </h1>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
         </div>
 
-            <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto leading-relaxed">
-              ✓  テンプレートから給与明細の管理と表示を行うサイトです
+            <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">
+              テンプレートから給与明細の管理と表示を行うサイトです
             </p>
-            <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
-              ✓  自動で計算を行い、データを保存されることはありません
+            <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto">
+              自動で計算を行い、データを保存されることはありません
             </p>
 
         {/* 入力フォーム */}
-        <div className="bg-white/90 rounded-xl shadow-lg border border-white/20 p-6 mb-8 hover:shadow-xl transition-shadow duration-200">
+        <div className="bg-white border border-gray-200 p-6 mb-8">
           <h2 className="text-xl font-semibold mb-6 text-gray-800">
             給与明細入力フォーム
           </h2>
@@ -402,10 +514,11 @@ export default function Home() {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setSalaryData((prev: SalaryData) => ({
                           ...prev,
-                          companyName: e.target.value,
+                          companyName: sanitizeString(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                      maxLength={MAX_STRING_LENGTH}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                       placeholder="会社名を入力"
                     />
                   </div>
@@ -423,10 +536,11 @@ export default function Home() {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setSalaryData((prev: SalaryData) => ({
                           ...prev,
-                          departmentName: e.target.value,
+                          departmentName: sanitizeString(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                      maxLength={MAX_STRING_LENGTH}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                       placeholder="部署名を入力"
                     />
                   </div>
@@ -444,10 +558,11 @@ export default function Home() {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setSalaryData((prev: SalaryData) => ({
                           ...prev,
-                          employeeNumber: e.target.value,
+                          employeeNumber: sanitizeString(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                      maxLength={MAX_STRING_LENGTH}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                       placeholder="社員番号を入力"
                     />
                   </div>
@@ -465,10 +580,11 @@ export default function Home() {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setSalaryData((prev: SalaryData) => ({
                           ...prev,
-                          employeeName: e.target.value,
+                          employeeName: sanitizeString(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                      maxLength={MAX_STRING_LENGTH}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                       placeholder="従業員名を入力"
                     />
                   </div>
@@ -492,7 +608,8 @@ export default function Home() {
                               ) =>
                             updateEarningItem(index, "name", e.target.value)
                           }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                          maxLength={MAX_STRING_LENGTH}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                           placeholder={
                             index === 0
                               ? "基本給"
@@ -522,11 +639,12 @@ export default function Home() {
                             updateEarningItem(
                               index,
                               "amount",
-                              parseInt(e.target.value) || 0
+                              e.target.value
                             )
                           }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                          className="w-24 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                           min="0"
+                          max={MAX_AMOUNT}
                         />
                       </div>
                     )
@@ -556,10 +674,10 @@ export default function Home() {
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         setSalaryData((prev: SalaryData) => ({
                           ...prev,
-                          year: parseInt(e.target.value),
+                          year: sanitizeYear(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                     >
                       {Array.from(
                         { length: 11 },
@@ -584,10 +702,10 @@ export default function Home() {
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         setSalaryData((prev: SalaryData) => ({
                           ...prev,
-                          month: parseInt(e.target.value),
+                          month: sanitizeMonth(e.target.value),
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                     >
                       {Array.from({ length: 12 }, (_, i) => i + 1).map(
                         (month) => (
@@ -622,7 +740,8 @@ export default function Home() {
                                   e.target.value
                                 )
                           }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                          maxLength={MAX_STRING_LENGTH}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                           placeholder={
                             index === 0
                                   ? "労働日数"
@@ -642,11 +761,12 @@ export default function Home() {
                             updateAttendanceItem(
                               index,
                               "amount",
-                              parseInt(e.target.value) || 0
+                              e.target.value
                             )
                           }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                          className="w-24 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                           min="0"
+                          max={9999}
                         />
                       </div>
                     )
@@ -675,7 +795,8 @@ export default function Home() {
                                   e.target.value
                                 )
                           }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                          maxLength={MAX_STRING_LENGTH}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                           placeholder={
                             index === 0
                               ? "健康保険"
@@ -705,11 +826,12 @@ export default function Home() {
                             updateDeductionItem(
                               index,
                               "amount",
-                              parseInt(e.target.value) || 0
+                              e.target.value
                             )
                           }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 hover:border-blue-300 bg-white"
+                          className="w-24 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                           min="0"
+                          max={MAX_AMOUNT}
                         />
                       </div>
                     )
@@ -721,19 +843,17 @@ export default function Home() {
         </div>
 
         {/* 給与明細プレビュー */}
-        <div className="bg-white/90 rounded-xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-shadow duration-200">
-          <div className="flex justify-between items-center mb-6">
+        <div className="bg-white border border-gray-200 p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h2 className="text-xl font-semibold text-gray-800">
-                  <span className="md:hidden" style={{ marginLeft: "50px" }}>
-                    給与明細
-                  </span>
-                  <span className="hidden md:inline">給与明細プレビュー</span>
+              <span className="md:hidden">給与明細</span>
+              <span className="hidden md:inline">給与明細プレビュー</span>
             </h2>
             <button
               onClick={exportToPDF}
-              className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+              className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium w-full md:w-auto"
             >
-              📄 PDFでダウンロード
+              PDFでダウンロード
             </button>
           </div>
 
@@ -1064,6 +1184,7 @@ export default function Home() {
                               ) =>
                                 updateDeductionItem(5, "name", e.target.value)
                               }
+                              maxLength={MAX_STRING_LENGTH}
                               className="w-full bg-transparent border-none outline-none text-blue-800 font-semibold"
                               placeholder="その他控除"
                             />
@@ -1342,7 +1463,7 @@ export default function Home() {
           <p className="text-sm text-gray-600 mb-2">お問い合わせ先</p>
           <a
             href="mailto:ogmer.net@gmail.com"
-            className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
+            className="text-blue-600 underline text-sm"
           >
             ogmer.net@gmail.com
           </a>

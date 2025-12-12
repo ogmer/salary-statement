@@ -6,8 +6,10 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
+  metadataBase: new URL("https://salary-statement.vercel.app"),
   title: "給与明細作成ツール",
-  description: "テンプレートから給与明細の管理と表示を行うサイトです。自動で計算を行い、データを保存されることはありません。",
+  description:
+    "テンプレートから給与明細の管理と表示を行うサイトです。自動で計算を行い、データを保存されることはありません。",
   keywords: ["給与明細", "給与計算", "PDF", "給与", "明細書", "給与明細書"],
   authors: [{ name: "給与明細作成ツール" }],
   creator: "給与明細作成ツール",
@@ -19,7 +21,8 @@ export const metadata = {
     url: "https://salary-statement.vercel.app",
     siteName: "給与明細作成ツール",
     title: "給与明細作成ツール",
-    description: "テンプレートから給与明細の管理と表示を行うサイトです。自動で計算を行い、データを保存されることはありません。",
+    description:
+      "テンプレートから給与明細の管理と表示を行うサイトです。自動で計算を行い、データを保存されることはありません。",
     images: [
       {
         url: "/header.png",
@@ -35,7 +38,8 @@ export const metadata = {
     site: "@salary_tool",
     creator: "@salary_tool",
     title: "給与明細作成ツール",
-    description: "テンプレートから給与明細の管理と表示を行うサイトです。自動で計算を行い、データを保存されることはありません。",
+    description:
+      "テンプレートから給与明細の管理と表示を行うサイトです。自動で計算を行い、データを保存されることはありません。",
     images: ["/header.png"],
   },
   icons: {
@@ -43,7 +47,11 @@ export const metadata = {
     apple: "/favicon.svg",
   },
   manifest: "/manifest.json",
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
   themeColor: "#3B82F6",
 };
 
