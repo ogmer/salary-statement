@@ -10,6 +10,7 @@
     "lint:css": "stylelint \"**/*.css\""
   },
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
     "autoprefixer": "^10.4.21",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.2",
