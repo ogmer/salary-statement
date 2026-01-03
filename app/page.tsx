@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface SalaryItem {
   name: string;
@@ -54,7 +54,10 @@ const escapeHtml = (text: string): string => {
 
 // 文字列入力のサニタイゼーション
 // 注意: Reactは自動的にエスケープするため、ここでは制御文字の除去と長さ制限のみを行う
-const sanitizeString = (input: string, maxLength: number = MAX_STRING_LENGTH): string => {
+const sanitizeString = (
+  input: string,
+  maxLength: number = MAX_STRING_LENGTH
+): string => {
   if (typeof input !== "string") {
     return "";
   }
@@ -185,6 +188,17 @@ export default function Home() {
     attendance: [...DEFAULT_ATTENDANCE],
   });
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // 計算処理
   const calculateTotals = () => {
     const totalEarnings = salaryData.earnings.reduce(
@@ -301,6 +315,21 @@ export default function Home() {
   // PDF出力機能
   const exportToPDF = async () => {
     let element: HTMLElement | null = null;
+    let isMobileDevice = false;
+    let originalStyles: {
+      display: string;
+      visibility: string;
+      position: string;
+      left: string;
+      top: string;
+      zIndex: string;
+      width: string;
+      height: string;
+      margin: string;
+      transform: string;
+      marginBottom: string;
+      paddingBottom: string;
+    } | null = null;
     try {
       // 常に表示中の要素を使用（スマホ版では一時的に表示）
       element = document.getElementById("salary-statement");
@@ -319,10 +348,40 @@ export default function Home() {
         button.disabled = true;
       }
 
-      // スマホ版では要素が非表示なので、一時的に表示状態にする
+      // スマホ版では要素が縮小表示されているので、一時的に通常サイズに戻す
+      isMobileDevice = window.innerWidth < 768;
       const isHidden =
         element.classList.contains("hidden") || element.offsetParent === null;
-      if (isHidden) {
+
+      // 元のスタイルを保存
+      originalStyles = {
+        display: element.style.display,
+        visibility: element.style.visibility,
+        position: element.style.position,
+        left: element.style.left,
+        top: element.style.top,
+        zIndex: element.style.zIndex,
+        width: element.style.width,
+        height: element.style.height,
+        margin: element.style.margin,
+        transform: element.style.transform,
+        marginBottom: element.style.marginBottom,
+        paddingBottom: element.style.paddingBottom,
+      };
+
+      // スマホ版または非表示の場合、一時的に通常サイズで表示
+      if (isMobileDevice || isHidden) {
+        // 親要素のクラスを一時的に無効化（スマホ版のw-[200%]などを解除）
+        const parentElement = element.parentElement;
+        const originalParentClass = parentElement?.className || "";
+        if (parentElement && isMobileDevice) {
+          parentElement.className = parentElement.className
+            .replace(/w-\[200%\]/g, "")
+            .replace(/min-w-\[200%\]/g, "")
+            .replace(/scale-50/g, "")
+            .trim();
+        }
+
         element.style.display = "block";
         element.style.visibility = "visible";
         element.style.position = "static";
@@ -330,48 +389,99 @@ export default function Home() {
         element.style.top = "auto";
         element.style.zIndex = "9999";
         element.style.width = "800px";
+        element.style.minWidth = "800px";
+        element.style.maxWidth = "800px";
         element.style.height = "auto";
         element.style.margin = "0 auto";
+        // スマホ版の縮小スタイルを解除
+        if (isMobileDevice) {
+          element.style.transform = "scale(1)";
+          element.style.marginBottom = "0";
+          element.style.paddingBottom = "";
+          // 要素自体のクラスからも縮小関連を一時的に削除
+          element.className = element.className
+            .replace(/w-\[200%\]/g, "")
+            .replace(/min-w-\[200%\]/g, "")
+            .replace(/scale-50/g, "")
+            .trim();
+        }
 
         // レンダリングを待つ
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // 親要素のクラスを保存（後で復元するため）
+        if (parentElement && isMobileDevice) {
+          (parentElement as any).__originalClassName = originalParentClass;
+        }
+        if (isMobileDevice) {
+          (element as any).__originalClassName = element.className;
+        }
       }
 
       // 動的にライブラリをインポート
       const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
         import("jspdf"),
-        import("html2canvas")
+        import("html2canvas"),
       ]);
 
       // html2canvasで要素をキャプチャ（高品質設定）
+      // 要素の実際のサイズを取得（スマホ版では一時的に通常サイズに戻しているため）
+      // レンダリング後に再計算
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const elementWidth = element.offsetWidth || element.scrollWidth || 800;
+      const elementHeight =
+        element.scrollHeight || element.offsetHeight || 1000;
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
-        width: 800,
-        height: element.scrollHeight || 1000,
+        // width/heightを指定しないことで、要素の自然なサイズでキャプチャ
         scrollX: 0,
         scrollY: 0,
-        windowWidth: 800,
-        windowHeight: element.scrollHeight || 1000,
         ignoreElements: (el) => {
           // 楽天ウィジェットなどの外部要素を除外
           return el.id?.includes("rakuten") || false;
         },
       });
 
-      // スマホ版の要素を元の非表示状態に戻す
-      if (isHidden) {
-        element.style.display = "";
-        element.style.visibility = "";
-        element.style.position = "";
-        element.style.left = "";
-        element.style.top = "";
-        element.style.zIndex = "";
-        element.style.width = "";
-        element.style.height = "";
+      // スマホ版の要素を元の状態に戻す
+      if (isMobileDevice || isHidden) {
+        const parentElement = element.parentElement;
+        // 親要素のクラスを復元
+        if (
+          parentElement &&
+          isMobileDevice &&
+          (parentElement as any).__originalClassName
+        ) {
+          parentElement.className = (parentElement as any).__originalClassName;
+          delete (parentElement as any).__originalClassName;
+        }
+        // 要素自体のクラスを復元
+        if (isMobileDevice && (element as any).__originalClassName) {
+          element.className = (element as any).__originalClassName;
+          delete (element as any).__originalClassName;
+        }
+
+        element.style.display = originalStyles.display;
+        element.style.visibility = originalStyles.visibility;
+        element.style.position = originalStyles.position;
+        element.style.left = originalStyles.left;
+        element.style.top = originalStyles.top;
+        element.style.zIndex = originalStyles.zIndex;
+        element.style.width = originalStyles.width;
+        element.style.minWidth = "";
+        element.style.maxWidth = "";
+        element.style.height = originalStyles.height;
+        element.style.margin = originalStyles.margin;
+        // スマホ版の縮小スタイルを復元
+        if (isMobileDevice) {
+          element.style.transform = originalStyles.transform;
+          element.style.marginBottom = originalStyles.marginBottom;
+          element.style.paddingBottom = originalStyles.paddingBottom;
+        }
       }
 
       const imgData = canvas.toDataURL("image/png", 1.0);
@@ -464,6 +574,48 @@ export default function Home() {
         button.textContent = "PDFでダウンロード";
         button.disabled = false;
       }
+
+      // エラー時も要素のスタイルを元に戻す
+      if (
+        element &&
+        originalStyles &&
+        (isMobileDevice ||
+          element.classList.contains("hidden") ||
+          element.offsetParent === null)
+      ) {
+        const parentElement = element.parentElement;
+        // 親要素のクラスを復元
+        if (
+          parentElement &&
+          isMobileDevice &&
+          (parentElement as any).__originalClassName
+        ) {
+          parentElement.className = (parentElement as any).__originalClassName;
+          delete (parentElement as any).__originalClassName;
+        }
+        // 要素自体のクラスを復元
+        if (isMobileDevice && (element as any).__originalClassName) {
+          element.className = (element as any).__originalClassName;
+          delete (element as any).__originalClassName;
+        }
+
+        element.style.display = originalStyles.display;
+        element.style.visibility = originalStyles.visibility;
+        element.style.position = originalStyles.position;
+        element.style.left = originalStyles.left;
+        element.style.top = originalStyles.top;
+        element.style.zIndex = originalStyles.zIndex;
+        element.style.width = originalStyles.width;
+        element.style.minWidth = "";
+        element.style.maxWidth = "";
+        element.style.height = originalStyles.height;
+        element.style.margin = originalStyles.margin;
+        if (isMobileDevice) {
+          element.style.transform = originalStyles.transform;
+          element.style.marginBottom = originalStyles.marginBottom;
+          element.style.paddingBottom = originalStyles.paddingBottom;
+        }
+      }
     }
   };
 
@@ -472,11 +624,11 @@ export default function Home() {
       <div className="w-full px-0">
         <div className="flex justify-center">
           <div className="max-w-4xl mx-auto px-4 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            給与明細作成ツール
-          </h1>
-        </div>
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                給与明細作成ツール
+              </h1>
+            </div>
 
             <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">
               テンプレートから給与明細の管理と表示を行うサイトです
@@ -485,252 +637,258 @@ export default function Home() {
               自動で計算を行い、データを保存されることはありません
             </p>
 
-        {/* 入力フォーム */}
-        <div className="bg-white border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-6 text-gray-800">
-            給与明細入力フォーム
-          </h2>
+            {/* 入力フォーム */}
+            <div className="bg-white border border-gray-200 p-3 md:p-6 mb-8">
+              <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-6 text-gray-800">
+                給与明細入力フォーム
+              </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* 左列: 基本情報と支給項目 */}
-            <div className="space-y-6">
-              {/* 基本情報 */}
-              <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-8">
+                {/* 左列: 基本情報と支給項目 */}
+                <div className="space-y-3 md:space-y-6">
+                  {/* 基本情報 */}
+                  <div className="space-y-2 md:space-y-4">
+                    <h3 className="text-sm md:text-lg font-medium text-gray-700">
                       基本情報
                     </h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label
-                      htmlFor="company-name"
-                      className="block text-sm font-medium text-gray-600 mb-1"
-                    >
-                      会社名
-                    </label>
-                    <input
-                      id="company-name"
-                      type="text"
-                      value={salaryData.companyName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setSalaryData((prev: SalaryData) => ({
-                          ...prev,
-                          companyName: sanitizeString(e.target.value),
-                        }))
-                      }
-                      maxLength={MAX_STRING_LENGTH}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                      placeholder="会社名を入力"
-                    />
+                    <div className="grid grid-cols-1 gap-2 md:gap-4">
+                      <div>
+                        <label
+                          htmlFor="company-name"
+                          className="block text-xs md:text-sm font-medium text-gray-600 mb-1"
+                        >
+                          会社名
+                        </label>
+                        <input
+                          id="company-name"
+                          type="text"
+                          value={salaryData.companyName}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setSalaryData((prev: SalaryData) => ({
+                              ...prev,
+                              companyName: sanitizeString(e.target.value),
+                            }))
+                          }
+                          maxLength={MAX_STRING_LENGTH}
+                          className="w-full px-2 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                          placeholder="会社名を入力"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="department-name"
+                          className="block text-xs md:text-sm font-medium text-gray-600 mb-1"
+                        >
+                          部署名
+                        </label>
+                        <input
+                          id="department-name"
+                          type="text"
+                          value={salaryData.departmentName}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setSalaryData((prev: SalaryData) => ({
+                              ...prev,
+                              departmentName: sanitizeString(e.target.value),
+                            }))
+                          }
+                          maxLength={MAX_STRING_LENGTH}
+                          className="w-full px-2 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                          placeholder="部署名を入力"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="employee-number"
+                          className="block text-xs md:text-sm font-medium text-gray-600 mb-1"
+                        >
+                          社員番号
+                        </label>
+                        <input
+                          id="employee-number"
+                          type="text"
+                          value={salaryData.employeeNumber}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setSalaryData((prev: SalaryData) => ({
+                              ...prev,
+                              employeeNumber: sanitizeString(e.target.value),
+                            }))
+                          }
+                          maxLength={MAX_STRING_LENGTH}
+                          className="w-full px-2 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                          placeholder="社員番号を入力"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="employee-name"
+                          className="block text-xs md:text-sm font-medium text-gray-600 mb-1"
+                        >
+                          氏名
+                        </label>
+                        <input
+                          id="employee-name"
+                          type="text"
+                          value={salaryData.employeeName}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setSalaryData((prev: SalaryData) => ({
+                              ...prev,
+                              employeeName: sanitizeString(e.target.value),
+                            }))
+                          }
+                          maxLength={MAX_STRING_LENGTH}
+                          className="w-full px-2 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                          placeholder="従業員名を入力"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label
-                      htmlFor="department-name"
-                      className="block text-sm font-medium text-gray-600 mb-1"
-                    >
-                      部署名
-                    </label>
-                    <input
-                      id="department-name"
-                      type="text"
-                      value={salaryData.departmentName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setSalaryData((prev: SalaryData) => ({
-                          ...prev,
-                          departmentName: sanitizeString(e.target.value),
-                        }))
-                      }
-                      maxLength={MAX_STRING_LENGTH}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                      placeholder="部署名を入力"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="employee-number"
-                      className="block text-sm font-medium text-gray-600 mb-1"
-                    >
-                      社員番号
-                    </label>
-                    <input
-                      id="employee-number"
-                      type="text"
-                      value={salaryData.employeeNumber}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setSalaryData((prev: SalaryData) => ({
-                          ...prev,
-                          employeeNumber: sanitizeString(e.target.value),
-                        }))
-                      }
-                      maxLength={MAX_STRING_LENGTH}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                      placeholder="社員番号を入力"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="employee-name"
-                      className="block text-sm font-medium text-gray-600 mb-1"
-                    >
-                      氏名
-                    </label>
-                    <input
-                      id="employee-name"
-                      type="text"
-                      value={salaryData.employeeName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setSalaryData((prev: SalaryData) => ({
-                          ...prev,
-                          employeeName: sanitizeString(e.target.value),
-                        }))
-                      }
-                      maxLength={MAX_STRING_LENGTH}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                      placeholder="従業員名を入力"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* 支給項目 */}
-              <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
+                  {/* 支給項目 */}
+                  <div className="space-y-2 md:space-y-4">
+                    <h3 className="text-sm md:text-lg font-medium text-gray-700">
                       支給項目
                     </h3>
-                <div className="space-y-3">
-                  {salaryData.earnings.map(
-                    (item: SalaryItem, index: number) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <input
-                          type="text"
-                          value={item.name}
+                    <div className="space-y-1.5 md:space-y-3">
+                      {salaryData.earnings.map(
+                        (item: SalaryItem, index: number) => (
+                          <div
+                            key={index}
+                            className="flex gap-1 md:gap-2 items-center"
+                          >
+                            <input
+                              type="text"
+                              value={item.name}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
-                            updateEarningItem(index, "name", e.target.value)
-                          }
-                          maxLength={MAX_STRING_LENGTH}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                          placeholder={
-                            index === 0
-                              ? "基本給"
-                              : index === 1
+                                updateEarningItem(index, "name", e.target.value)
+                              }
+                              maxLength={MAX_STRING_LENGTH}
+                              className="flex-1 min-w-0 px-1.5 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                              placeholder={
+                                index === 0
+                                  ? "基本給"
+                                  : index === 1
                                   ? "残業手当"
-                              : index === 2
+                                  : index === 2
                                   ? "通勤手当"
-                              : index === 3
+                                  : index === 3
                                   ? "住宅手当"
-                              : index === 4
-                              ? "その他手当"
-                              : index === 5
-                              ? "その他手当2"
-                              : index === 6
-                              ? "その他手当3"
-                              : index === 7
-                              ? "その他手当4"
-                              : "その他手当5"
-                          }
-                        />
-                        <input
-                          type="number"
+                                  : index === 4
+                                  ? "その他手当"
+                                  : index === 5
+                                  ? "その他手当2"
+                                  : index === 6
+                                  ? "その他手当3"
+                                  : index === 7
+                                  ? "その他手当4"
+                                  : "その他手当5"
+                              }
+                            />
+                            <input
+                              type="number"
                               value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
-                            updateEarningItem(
-                              index,
-                              "amount",
-                              e.target.value
-                            )
-                          }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                          min="0"
-                          max={MAX_AMOUNT}
-                        />
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 右列: 労働期間と控除項目 */}
-            <div className="space-y-6">
-              {/* 労働期間 */}
-              <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
-                      労働期間
-                    </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="year"
-                      className="block text-sm font-medium text-gray-600 mb-1"
-                    >
-                      年
-                    </label>
-                    <select
-                      id="year"
-                      value={salaryData.year}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setSalaryData((prev: SalaryData) => ({
-                          ...prev,
-                          year: sanitizeYear(e.target.value),
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                    >
-                      {Array.from(
-                        { length: 11 },
-                        (_, i) => new Date().getFullYear() - 5 + i
-                      ).map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="month"
-                      className="block text-sm font-medium text-gray-600 mb-1"
-                    >
-                      月
-                    </label>
-                    <select
-                      id="month"
-                      value={salaryData.month}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setSalaryData((prev: SalaryData) => ({
-                          ...prev,
-                          month: sanitizeMonth(e.target.value),
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                    >
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                        (month) => (
-                          <option key={month} value={month}>
-                            {month}
-                          </option>
+                                updateEarningItem(
+                                  index,
+                                  "amount",
+                                  e.target.value
+                                )
+                              }
+                              className="w-14 md:w-24 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                              min="0"
+                              max={MAX_AMOUNT}
+                            />
+                          </div>
                         )
                       )}
-                    </select>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* 勤怠項目 */}
-              <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
+                {/* 右列: 労働期間と控除項目 */}
+                <div className="space-y-3 md:space-y-6">
+                  {/* 労働期間 */}
+                  <div className="space-y-2 md:space-y-4">
+                    <h3 className="text-sm md:text-lg font-medium text-gray-700">
+                      労働期間
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 md:gap-4">
+                      <div>
+                        <label
+                          htmlFor="year"
+                          className="block text-xs md:text-sm font-medium text-gray-600 mb-1"
+                        >
+                          年
+                        </label>
+                        <select
+                          id="year"
+                          value={salaryData.year}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                            setSalaryData((prev: SalaryData) => ({
+                              ...prev,
+                              year: sanitizeYear(e.target.value),
+                            }))
+                          }
+                          className="w-full px-2 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                        >
+                          {Array.from(
+                            { length: 11 },
+                            (_, i) => new Date().getFullYear() - 5 + i
+                          ).map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="month"
+                          className="block text-xs md:text-sm font-medium text-gray-600 mb-1"
+                        >
+                          月
+                        </label>
+                        <select
+                          id="month"
+                          value={salaryData.month}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                            setSalaryData((prev: SalaryData) => ({
+                              ...prev,
+                              month: sanitizeMonth(e.target.value),
+                            }))
+                          }
+                          className="w-full px-2 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                            (month) => (
+                              <option key={month} value={month}>
+                                {month}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 勤怠項目 */}
+                  <div className="space-y-2 md:space-y-4">
+                    <h3 className="text-sm md:text-lg font-medium text-gray-700">
                       勤怠項目
                     </h3>
-                <div className="space-y-3">
-                  {salaryData.attendance.map(
-                    (item: SalaryItem, index: number) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <input
-                          type="text"
-                          value={item.name}
+                    <div className="space-y-1.5 md:space-y-3">
+                      {salaryData.attendance.map(
+                        (item: SalaryItem, index: number) => (
+                          <div
+                            key={index}
+                            className="flex gap-1 md:gap-2 items-center"
+                          >
+                            <input
+                              type="text"
+                              value={item.name}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
@@ -739,53 +897,56 @@ export default function Home() {
                                   "name",
                                   e.target.value
                                 )
-                          }
-                          maxLength={MAX_STRING_LENGTH}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                          placeholder={
-                            index === 0
+                              }
+                              maxLength={MAX_STRING_LENGTH}
+                              className="flex-1 min-w-0 px-1.5 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                              placeholder={
+                                index === 0
                                   ? "労働日数"
-                              : index === 1
-                              ? "残業時間"
-                              : index === 2
-                              ? "その他勤怠1"
-                              : "その他勤怠2"
-                          }
-                        />
-                        <input
-                          type="number"
+                                  : index === 1
+                                  ? "残業時間"
+                                  : index === 2
+                                  ? "その他勤怠1"
+                                  : "その他勤怠2"
+                              }
+                            />
+                            <input
+                              type="number"
                               value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
-                            updateAttendanceItem(
-                              index,
-                              "amount",
-                              e.target.value
-                            )
-                          }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                          min="0"
-                          max={9999}
-                        />
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
+                                updateAttendanceItem(
+                                  index,
+                                  "amount",
+                                  e.target.value
+                                )
+                              }
+                              className="w-14 md:w-24 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                              min="0"
+                              max={9999}
+                            />
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
 
-              {/* 控除項目 */}
-              <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-700">
+                  {/* 控除項目 */}
+                  <div className="space-y-2 md:space-y-4">
+                    <h3 className="text-sm md:text-lg font-medium text-gray-700">
                       控除項目
                     </h3>
-                <div className="space-y-3">
-                  {salaryData.deductions.map(
-                    (item: SalaryItem, index: number) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <input
-                          type="text"
-                          value={item.name}
+                    <div className="space-y-1.5 md:space-y-3">
+                      {salaryData.deductions.map(
+                        (item: SalaryItem, index: number) => (
+                          <div
+                            key={index}
+                            className="flex gap-1 md:gap-2 items-center"
+                          >
+                            <input
+                              type="text"
+                              value={item.name}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
@@ -794,224 +955,238 @@ export default function Home() {
                                   "name",
                                   e.target.value
                                 )
-                          }
-                          maxLength={MAX_STRING_LENGTH}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                          placeholder={
-                            index === 0
-                              ? "健康保険"
-                              : index === 1
-                              ? "厚生年金"
-                              : index === 2
-                              ? "雇用保険"
-                              : index === 3
-                              ? "所得税"
-                              : index === 4
-                              ? "住民税"
-                              : index === 5
-                              ? "その他控除1"
-                              : index === 6
-                              ? "その他控除2"
-                              : index === 7
-                              ? "その他控除3"
-                              : "その他控除4"
-                          }
-                        />
-                        <input
-                          type="number"
+                              }
+                              maxLength={MAX_STRING_LENGTH}
+                              className="flex-1 min-w-0 px-1.5 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                              placeholder={
+                                index === 0
+                                  ? "健康保険"
+                                  : index === 1
+                                  ? "厚生年金"
+                                  : index === 2
+                                  ? "雇用保険"
+                                  : index === 3
+                                  ? "所得税"
+                                  : index === 4
+                                  ? "住民税"
+                                  : index === 5
+                                  ? "その他控除1"
+                                  : index === 6
+                                  ? "その他控除2"
+                                  : index === 7
+                                  ? "その他控除3"
+                                  : "その他控除4"
+                              }
+                            />
+                            <input
+                              type="number"
                               value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                               ) =>
-                            updateDeductionItem(
-                              index,
-                              "amount",
-                              e.target.value
-                            )
-                          }
-                          className="w-24 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                          min="0"
-                          max={MAX_AMOUNT}
-                        />
-                      </div>
-                    )
-                  )}
+                                updateDeductionItem(
+                                  index,
+                                  "amount",
+                                  e.target.value
+                                )
+                              }
+                              className="w-14 md:w-24 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
+                              min="0"
+                              max={MAX_AMOUNT}
+                            />
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* 給与明細プレビュー */}
-        <div className="bg-white border border-gray-200 p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
-              <span className="md:hidden">給与明細</span>
-              <span className="hidden md:inline">給与明細プレビュー</span>
-            </h2>
-            <button
-              onClick={exportToPDF}
-              className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium w-full md:w-auto"
-            >
-              PDFでダウンロード
-            </button>
-          </div>
+            {/* 給与明細プレビュー */}
+            <div className="bg-white border border-gray-200 p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  <span className="md:hidden">給与明細</span>
+                  <span className="hidden md:inline">給与明細プレビュー</span>
+                </h2>
+                <button
+                  onClick={exportToPDF}
+                  className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium w-full md:w-auto"
+                >
+                  PDFでダウンロード
+                </button>
+              </div>
 
-              {/* スマホ版では非表示、PC版では表示 */}
-              <div className="hidden md:block">
-          <div id="salary-statement" className="bg-white p-8">
-            {/* 給与明細のヘッダー */}
-            <div className="mb-4">
-              {/* 1行目: 会社名 | 給与明細書 | 社員番号 */}
+              {/* スマホ版では縮小表示、PC版では通常表示 */}
+              <div
+                className="overflow-hidden md:overflow-visible -mx-6 md:mx-0"
+                style={
+                  isMobile
+                    ? { height: "fit-content", maxHeight: "50vh" }
+                    : undefined
+                }
+              >
+                <div
+                  id="salary-statement"
+                  className="bg-white p-4 md:p-8 transform md:transform-none scale-50 md:scale-100 origin-top-left md:origin-center w-[200%] md:w-auto min-w-[200%] md:min-w-0"
+                  style={{
+                    marginBottom: isMobile ? "-50%" : undefined,
+                    paddingBottom: isMobile ? 0 : undefined,
+                  }}
+                >
+                  {/* 給与明細のヘッダー */}
+                  <div className="mb-4">
+                    {/* 1行目: 会社名 | 給与明細書 | 社員番号 */}
                     <div className="grid grid-cols-3 gap-0 mb-2">
-                <div>
+                      <div>
                         <p className="text-gray-800">
-                    会社名: {salaryData.companyName || ""}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <h1 className="text-3xl font-bold text-blue-800">
-                    給与明細書
-                  </h1>
-                </div>
-                <div>
+                          会社名: {salaryData.companyName || ""}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <h1 className="text-3xl font-bold text-blue-800">
+                          給与明細書
+                        </h1>
+                      </div>
+                      <div>
                         <p
                           className="text-gray-800"
                           style={{ textAlign: "left", paddingLeft: "10%" }}
                         >
-                    社員番号: {salaryData.employeeNumber || ""}
-                  </p>
-                </div>
-              </div>
+                          社員番号: {salaryData.employeeNumber || ""}
+                        </p>
+                      </div>
+                    </div>
 
-              {/* 2行目: 部署名 | 年月 | 氏名 */}
+                    {/* 2行目: 部署名 | 年月 | 氏名 */}
                     <div className="grid grid-cols-3 gap-0">
-                <div>
+                      <div>
                         <p className="text-gray-800">
-                    部署名: {salaryData.departmentName || ""}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl font-medium text-blue-600">
-                    {salaryData.year}年 {salaryData.month}月分
-                  </p>
-                </div>
-                <div>
+                          部署名: {salaryData.departmentName || ""}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xl font-medium text-blue-600">
+                          {salaryData.year}年 {salaryData.month}月分
+                        </p>
+                      </div>
+                      <div>
                         <p
                           className="text-gray-800"
                           style={{ textAlign: "left", paddingLeft: "10%" }}
                         >
-                    氏名: {salaryData.employeeName || ""}
-                  </p>
-                </div>
-              </div>
-            </div>
+                          氏名: {salaryData.employeeName || ""}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* 支給額テーブル */}
-            <div className="mb-8">
+                  {/* 支給額テーブル */}
+                  <div className="mb-8">
                     <table
                       className="w-full border-collapse table-fixed"
                       style={{ minHeight: "200px" }}
                     >
-                <thead>
-                  {/* 1行目: 項目名 */}
-                  <tr className="bg-blue-100">
+                      <thead>
+                        {/* 1行目: 項目名 */}
+                        <tr className="bg-blue-100">
                           <th
                             className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
                             style={{ width: "8%" }}
                           >
-                      &nbsp;
-                    </th>
+                            &nbsp;
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[0]?.name || ""}
-                    </th>
+                            {salaryData.earnings[0]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[1]?.name || ""}
-                    </th>
+                            {salaryData.earnings[1]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[2]?.name || ""}
-                    </th>
+                            {salaryData.earnings[2]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[3]?.name || ""}
-                    </th>
+                            {salaryData.earnings[3]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[4]?.name || ""}
-                    </th>
+                            {salaryData.earnings[4]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
                           >
                             {salaryData.earnings[5]?.name || ""}
                           </th>
-                  </tr>
-                  {/* 2行目: 金額表示 */}
-                  <tr>
+                        </tr>
+                        {/* 2行目: 金額表示 */}
+                        <tr>
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-bottom"
                             style={{ width: "8%" }}
                           >
-                      支
-                    </td>
+                            支
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[0]?.amount &&
-                      salaryData.earnings[0].amount > 0
-                        ? salaryData.earnings[0].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[0]?.amount &&
+                            salaryData.earnings[0].amount > 0
+                              ? salaryData.earnings[0].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[1]?.amount &&
-                      salaryData.earnings[1].amount > 0
-                        ? salaryData.earnings[1].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[1]?.amount &&
+                            salaryData.earnings[1].amount > 0
+                              ? salaryData.earnings[1].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[2]?.amount &&
-                      salaryData.earnings[2].amount > 0
-                        ? salaryData.earnings[2].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[2]?.amount &&
+                            salaryData.earnings[2].amount > 0
+                              ? salaryData.earnings[2].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[3]?.amount &&
-                      salaryData.earnings[3].amount > 0
-                        ? salaryData.earnings[3].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[3]?.amount &&
+                            salaryData.earnings[3].amount > 0
+                              ? salaryData.earnings[3].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[4]?.amount &&
-                      salaryData.earnings[4].amount > 0
-                        ? salaryData.earnings[4].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[4]?.amount &&
+                            salaryData.earnings[4].amount > 0
+                              ? salaryData.earnings[4].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "17%" }}
@@ -1021,33 +1196,33 @@ export default function Home() {
                               ? salaryData.earnings[5].amount.toLocaleString()
                               : "\u00A0"}
                           </td>
-                  </tr>
-                  {/* 3行目: その他手当の項目名 */}
-                  <tr className="bg-blue-100">
+                        </tr>
+                        {/* 3行目: その他手当の項目名 */}
+                        <tr className="bg-blue-100">
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-top"
                             style={{ width: "8%" }}
                           >
-                      給
-                    </td>
+                            給
+                          </td>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[6]?.name || ""}
-                    </th>
+                            {salaryData.earnings[6]?.name || ""}
+                          </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[7]?.name || ""}
-                    </th>
+                            {salaryData.earnings[7]?.name || ""}
+                          </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[8]?.name || ""}
-                    </th>
+                            {salaryData.earnings[8]?.name || ""}
+                          </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
@@ -1064,44 +1239,44 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
                           >
-                      支給額合計
-                    </th>
-                  </tr>
-                  {/* 4行目: その他手当の金額 */}
-                  <tr>
+                            支給額合計
+                          </th>
+                        </tr>
+                        {/* 4行目: その他手当の金額 */}
+                        <tr>
                           <td
                             className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
                             style={{ width: "8%" }}
                           >
-                      {"\u00A0"}
-                    </td>
+                            {"\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[6]?.amount &&
-                      salaryData.earnings[6].amount > 0
-                        ? salaryData.earnings[6].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[6]?.amount &&
+                            salaryData.earnings[6].amount > 0
+                              ? salaryData.earnings[6].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[7]?.amount &&
-                      salaryData.earnings[7].amount > 0
-                        ? salaryData.earnings[7].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[7]?.amount &&
+                            salaryData.earnings[7].amount > 0
+                              ? salaryData.earnings[7].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.earnings[8]?.amount &&
-                      salaryData.earnings[8].amount > 0
-                        ? salaryData.earnings[8].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.earnings[8]?.amount &&
+                            salaryData.earnings[8].amount > 0
+                              ? salaryData.earnings[8].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
@@ -1118,58 +1293,58 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800 font-bold"
                             style={{ width: "17%" }}
                           >
-                      {totals.totalEarnings.toLocaleString()}
-                    </td>
-                  </tr>
-                </thead>
-              </table>
-            </div>
+                            {totals.totalEarnings.toLocaleString()}
+                          </td>
+                        </tr>
+                      </thead>
+                    </table>
+                  </div>
 
-            {/* 控除額テーブル */}
-            <div className="mb-8">
+                  {/* 控除額テーブル */}
+                  <div className="mb-8">
                     <table
                       className="w-full border-collapse table-fixed"
                       style={{ minHeight: "200px" }}
                     >
-                <thead>
-                  {/* 1行目: 項目名 */}
-                  <tr className="bg-blue-100">
+                      <thead>
+                        {/* 1行目: 項目名 */}
+                        <tr className="bg-blue-100">
                           <th
                             className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
                             style={{ width: "8%" }}
                           >
-                      &nbsp;
-                    </th>
+                            &nbsp;
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[0]?.name || ""}
-                    </th>
+                            {salaryData.deductions[0]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[1]?.name || ""}
-                    </th>
+                            {salaryData.deductions[1]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[2]?.name || ""}
-                    </th>
+                            {salaryData.deductions[2]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[3]?.name || ""}
-                    </th>
+                            {salaryData.deductions[3]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[4]?.name || ""}
-                    </th>
+                            {salaryData.deductions[4]?.name || ""}
+                          </th>
                           <th
                             className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
@@ -1189,60 +1364,60 @@ export default function Home() {
                               placeholder="その他控除"
                             />
                           </th>
-                  </tr>
-                  {/* 2行目: 金額表示 */}
-                  <tr>
+                        </tr>
+                        {/* 2行目: 金額表示 */}
+                        <tr>
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-bottom"
                             style={{ width: "8%" }}
                           >
-                      控
-                    </td>
+                            控
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[0]?.amount &&
-                      salaryData.deductions[0].amount > 0
-                        ? salaryData.deductions[0].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[0]?.amount &&
+                            salaryData.deductions[0].amount > 0
+                              ? salaryData.deductions[0].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[1]?.amount &&
-                      salaryData.deductions[1].amount > 0
-                        ? salaryData.deductions[1].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[1]?.amount &&
+                            salaryData.deductions[1].amount > 0
+                              ? salaryData.deductions[1].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[2]?.amount &&
-                      salaryData.deductions[2].amount > 0
-                        ? salaryData.deductions[2].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[2]?.amount &&
+                            salaryData.deductions[2].amount > 0
+                              ? salaryData.deductions[2].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[3]?.amount &&
-                      salaryData.deductions[3].amount > 0
-                        ? salaryData.deductions[3].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[3]?.amount &&
+                            salaryData.deductions[3].amount > 0
+                              ? salaryData.deductions[3].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[4]?.amount &&
-                      salaryData.deductions[4].amount > 0
-                        ? salaryData.deductions[4].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[4]?.amount &&
+                            salaryData.deductions[4].amount > 0
+                              ? salaryData.deductions[4].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "17%" }}
@@ -1252,33 +1427,33 @@ export default function Home() {
                               ? salaryData.deductions[5].amount.toLocaleString()
                               : "\u00A0"}
                           </td>
-                  </tr>
-                  {/* 3行目: その他控除の項目名 */}
-                  <tr className="bg-blue-100">
+                        </tr>
+                        {/* 3行目: その他控除の項目名 */}
+                        <tr className="bg-blue-100">
                           <td
                             className="border-l border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-top"
                             style={{ width: "8%" }}
                           >
-                      除
-                    </td>
+                            除
+                          </td>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[6]?.name || ""}
-                    </th>
+                            {salaryData.deductions[6]?.name || ""}
+                          </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[7]?.name || ""}
-                    </th>
+                            {salaryData.deductions[7]?.name || ""}
+                          </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[8]?.name || ""}
-                    </th>
+                            {salaryData.deductions[8]?.name || ""}
+                          </th>
                           <th
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "15%" }}
@@ -1295,44 +1470,44 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                             style={{ width: "17%" }}
                           >
-                      控除額合計
-                    </th>
-                  </tr>
-                  {/* 4行目: その他控除の金額 */}
-                  <tr>
+                            控除額合計
+                          </th>
+                        </tr>
+                        {/* 4行目: その他控除の金額 */}
+                        <tr>
                           <td
                             className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
                             style={{ width: "8%" }}
                           >
-                      {"\u00A0"}
-                    </td>
+                            {"\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[6]?.amount &&
-                      salaryData.deductions[6].amount > 0
-                        ? salaryData.deductions[6].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[6]?.amount &&
+                            salaryData.deductions[6].amount > 0
+                              ? salaryData.deductions[6].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[7]?.amount &&
-                      salaryData.deductions[7].amount > 0
-                        ? salaryData.deductions[7].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[7]?.amount &&
+                            salaryData.deductions[7].amount > 0
+                              ? salaryData.deductions[7].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
                           >
-                      {salaryData.deductions[8]?.amount &&
-                      salaryData.deductions[8].amount > 0
-                        ? salaryData.deductions[8].amount.toLocaleString()
-                        : "\u00A0"}
-                    </td>
+                            {salaryData.deductions[8]?.amount &&
+                            salaryData.deductions[8].amount > 0
+                              ? salaryData.deductions[8].amount.toLocaleString()
+                              : "\u00A0"}
+                          </td>
                           <td
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                             style={{ width: "15%" }}
@@ -1349,57 +1524,57 @@ export default function Home() {
                             className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800 font-bold"
                             style={{ width: "17%" }}
                           >
-                      {totals.totalDeductions.toLocaleString()}
-                    </td>
-                  </tr>
-                </thead>
-              </table>
-            </div>
+                            {totals.totalDeductions.toLocaleString()}
+                          </td>
+                        </tr>
+                      </thead>
+                    </table>
+                  </div>
 
-            {/* 勤怠・差引支給額 */}
-            <div className="flex gap-8 items-start">
-              <div className="w-4/5">
-                <table className="w-full border-collapse table-fixed">
-                  <thead>
-                    <tr className="bg-blue-100">
+                  {/* 勤怠・差引支給額 */}
+                  <div className="flex gap-8 items-start">
+                    <div className="w-4/5">
+                      <table className="w-full border-collapse table-fixed">
+                        <thead>
+                          <tr className="bg-blue-100">
                             <th
                               className="border-l border-t border-r border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold"
                               style={{ width: "10%" }}
                             >
-                        勤
-                      </th>
+                              勤
+                            </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                        {salaryData.attendance[0]?.name || ""}
-                      </th>
+                              {salaryData.attendance[0]?.name || ""}
+                            </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                        {salaryData.attendance[1]?.name || ""}
-                      </th>
+                              {salaryData.attendance[1]?.name || ""}
+                            </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                        {salaryData.attendance[2]?.name || ""}
-                      </th>
+                              {salaryData.attendance[2]?.name || ""}
+                            </th>
                             <th
                               className="border-t border-r border-b border-blue-400 px-2 py-2 text-left text-blue-800"
                               style={{ width: "22%" }}
                             >
-                        {salaryData.attendance[3]?.name || ""}
-                      </th>
-                    </tr>
-                    <tr>
+                              {salaryData.attendance[3]?.name || ""}
+                            </th>
+                          </tr>
+                          <tr>
                             <td
                               className="border-l border-r border-b border-blue-400 px-2 py-2 text-center text-blue-800 bg-blue-200 font-bold text-middle"
                               style={{ width: "10%" }}
                             >
-                        怠
-                      </td>
+                              怠
+                            </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
@@ -1407,16 +1582,16 @@ export default function Home() {
                               {formatAmount(
                                 salaryData.attendance[0]?.amount || 0
                               )}
-                      </td>
+                            </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
                             >
-                        {formatAmount(
-                          salaryData.attendance[1]?.amount || 0,
-                          true
-                        )}
-                      </td>
+                              {formatAmount(
+                                salaryData.attendance[1]?.amount || 0,
+                                true
+                              )}
+                            </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
@@ -1424,7 +1599,7 @@ export default function Home() {
                               {formatAmount(
                                 salaryData.attendance[2]?.amount || 0
                               )}
-                      </td>
+                            </td>
                             <td
                               className="border-r border-b border-blue-400 px-2 py-2 text-right text-blue-800"
                               style={{ width: "22%" }}
@@ -1432,44 +1607,44 @@ export default function Home() {
                               {formatAmount(
                                 salaryData.attendance[3]?.amount || 0
                               )}
-                      </td>
-                    </tr>
-                  </thead>
-                </table>
-              </div>
+                            </td>
+                          </tr>
+                        </thead>
+                      </table>
+                    </div>
 
-              <div className="flex flex-col w-1/6">
-                <h3 className="text-sm font-bold text-blue-800 mb-2">
-                  差引支給額
-                </h3>
-                <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-16 flex items-center justify-center">
-                  <p className="text-xl font-bold text-blue-800">
-                    {totals.netPay.toLocaleString()}
-                  </p>
+                    <div className="flex flex-col w-1/6">
+                      <h3 className="text-sm font-bold text-blue-800 mb-2">
+                        差引支給額
+                      </h3>
+                      <div className="border-2 border-blue-400 p-2 text-center bg-blue-50 h-16 flex items-center justify-center">
+                        <p className="text-xl font-bold text-blue-800">
+                          {totals.netPay.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    </div>
-    </div>
 
-    {/* フッター */}
-    <footer className="bg-white mt-12">
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="text-center">
-          <p className="text-sm text-gray-600 mb-2">お問い合わせ先</p>
-          <a
-            href="mailto:ogmer.net@gmail.com"
-            className="text-blue-600 underline text-sm"
-          >
-            ogmer.net@gmail.com
-          </a>
+      {/* フッター */}
+      <footer className="bg-white mt-12">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-2">お問い合わせ先</p>
+            <a
+              href="mailto:ogmer.net@gmail.com"
+              className="text-blue-600 underline text-sm"
+            >
+              ogmer.net@gmail.com
+            </a>
+          </div>
         </div>
-      </div>
-    </footer>
+      </footer>
     </div>
   );
 }
