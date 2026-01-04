@@ -69,6 +69,13 @@ const sanitizeString = (
   return sanitized;
 };
 
+// 全角数字を半角数字に変換する関数
+const convertFullWidthToHalfWidth = (str: string): string => {
+  return str.replace(/[０-９]/g, (char) => {
+    return String.fromCharCode(char.charCodeAt(0) - 0xFEE0);
+  });
+};
+
 // 数値入力の検証とサニタイゼーション
 const sanitizeNumber = (
   input: string | number,
@@ -86,8 +93,11 @@ const sanitizeNumber = (
     return 0;
   }
 
+  // 全角数字を半角数字に変換
+  const halfWidthInput = convertFullWidthToHalfWidth(input);
+
   // 数値以外の文字を除去（負の符号と小数点は許可しない）
-  const cleaned = input.replace(/[^\d]/g, "");
+  const cleaned = halfWidthInput.replace(/[^\d]/g, "");
   if (cleaned === "") {
     return 0;
   }
@@ -634,7 +644,7 @@ export default function Home() {
               テンプレートから給与明細の管理と表示を行うサイトです
             </p>
             <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto">
-              自動で計算を行い、データを保存されることはありません
+              自動で計算を行います。データが自動で保存されることはありません。
             </p>
 
             {/* 入力フォーム */}
@@ -786,20 +796,20 @@ export default function Home() {
                               }
                             />
                             <input
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
                               value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
-                              ) =>
+                              ) => {
+                                const convertedValue = convertFullWidthToHalfWidth(e.target.value);
                                 updateEarningItem(
                                   index,
                                   "amount",
-                                  e.target.value
-                                )
-                              }
-                              className="w-14 md:w-24 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                              min="0"
-                              max={MAX_AMOUNT}
+                                  convertedValue
+                                );
+                              }}
+                              className="flex-1 min-w-0 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                             />
                           </div>
                         )
@@ -911,20 +921,20 @@ export default function Home() {
                               }
                             />
                             <input
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
                               value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
-                              ) =>
+                              ) => {
+                                const convertedValue = convertFullWidthToHalfWidth(e.target.value);
                                 updateAttendanceItem(
                                   index,
                                   "amount",
-                                  e.target.value
-                                )
-                              }
-                              className="w-14 md:w-24 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                              min="0"
-                              max={9999}
+                                  convertedValue
+                                );
+                              }}
+                              className="flex-1 min-w-0 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                             />
                           </div>
                         )
@@ -979,20 +989,20 @@ export default function Home() {
                               }
                             />
                             <input
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
                               value={item.amount === 0 ? "" : item.amount}
                               onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
-                              ) =>
+                              ) => {
+                                const convertedValue = convertFullWidthToHalfWidth(e.target.value);
                                 updateDeductionItem(
                                   index,
                                   "amount",
-                                  e.target.value
-                                )
-                              }
-                              className="w-14 md:w-24 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
-                              min="0"
-                              max={MAX_AMOUNT}
+                                  convertedValue
+                                );
+                              }}
+                              className="flex-1 min-w-0 px-1 py-1 md:px-3 md:py-2 text-xs md:text-base border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white"
                             />
                           </div>
                         )
